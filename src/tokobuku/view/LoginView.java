@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import tokobuku.impl.LoginImpl;
 import tokobuku.interf.LoginInterface;
 import tokobuku.util.DragWindow;
+import tokobuku.util.CustomFont;
 
 /**
  *
@@ -130,7 +131,8 @@ public class LoginView extends javax.swing.JFrame {
         loginPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         loginButton.setBackground(new java.awt.Color(199, 102, 36));
-        loginButton.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        loginButton.setFont(new CustomFont().getFont("tahoma", 1, 12)
+        );
         loginButton.setForeground(new java.awt.Color(255, 255, 255));
         loginButton.setText("SIGN IN");
         loginButton.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -158,7 +160,8 @@ public class LoginView extends javax.swing.JFrame {
         panelUsername.add(iconUser, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 15, -1, -1));
 
         fieldUsername.setBackground(new java.awt.Color(240, 240, 240));
-        fieldUsername.setFont(new java.awt.Font("Asap", 0, 14)); // NOI18N
+        fieldUsername.setFont(new CustomFont().getFont("asap", 14)
+        );
         fieldUsername.setForeground(new java.awt.Color(51, 51, 51));
         fieldUsername.setText("Username/Email");
         fieldUsername.setToolTipText("Masukkan Username / Email");
@@ -197,7 +200,8 @@ public class LoginView extends javax.swing.JFrame {
 
         loginPanel.add(panelPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 220, 270, 60));
 
-        titleText.setFont(new java.awt.Font("Bebas", 0, 36)); // NOI18N
+        titleText.setFont(new CustomFont().getFont("bebas", 36)
+        );
         titleText.setForeground(new java.awt.Color(51, 51, 51));
         titleText.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         titleText.setText("K-SIR   BOOK");
@@ -211,7 +215,8 @@ public class LoginView extends javax.swing.JFrame {
 
         backgroundPanel.add(loginPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 50, 420, 410));
 
-        versionText.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        versionText.setFont(new CustomFont().getFont("tahoma", 14)
+        );
         versionText.setForeground(new java.awt.Color(255, 255, 255));
         versionText.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         versionText.setText("V 1.0");

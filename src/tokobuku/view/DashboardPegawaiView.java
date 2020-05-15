@@ -8,6 +8,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.Timer;
 import java.util.prefs.BackingStoreException;
 import javax.swing.SwingUtilities;
@@ -15,6 +17,7 @@ import tokobuku.impl.BukuImpl;
 import tokobuku.model.Buku;
 import tokobuku.util.DragWindow;
 import tokobuku.util.PreferencedHelper;
+import tokobuku.util.CustomFont;
 
 /**
  *
@@ -23,10 +26,10 @@ import tokobuku.util.PreferencedHelper;
 public class DashboardPegawaiView extends javax.swing.JFrame {
 
     private static final PreferencedHelper PREFS = new PreferencedHelper();
-    private BukuImpl buku = new BukuImpl();
+    private final BukuImpl buku = new BukuImpl();
     private List<Buku> listBuku = new ArrayList<>();
     private int totalBuku = 0;
-    private int columns = 2;
+    private final int columns = 2;
     private int rows = 0;
     private float height = 0;
 
@@ -96,16 +99,20 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         listBukuPanel.setPreferredSize(new java.awt.Dimension(1045, (int) height));
         for (int i = 0; i < totalBuku; i++) {
             BookPanelView bookPanelView = new BookPanelView();
-            bookPanelView.setProperty(
-                    listBuku.get(i).getImage(),
-                    listBuku.get(i).getJudul_buku(),
-                    listBuku.get(i).getIsbn(),
-                    listBuku.get(i).getKategori(),
-                    listBuku.get(i).getPenulis(),
-                    listBuku.get(i).getPenerbit(),
-                    listBuku.get(i).getTahun(),
-                    listBuku.get(i).getStok(),
-                    listBuku.get(i).getHarga_jual());
+            try {
+                bookPanelView.setProperty(
+                        listBuku.get(i).getImage(),
+                        listBuku.get(i).getJudul_buku(),
+                        listBuku.get(i).getIsbn(),
+                        listBuku.get(i).getKategori(),
+                        listBuku.get(i).getPenulis(),
+                        listBuku.get(i).getPenerbit(),
+                        listBuku.get(i).getTahun(),
+                        listBuku.get(i).getStok(),
+                        listBuku.get(i).getHarga_jual());
+            } catch (Exception ex) {
+                Logger.getLogger(DashboardPegawaiView.class.getName()).log(Level.SEVERE, null, ex);
+            }
             bookPanelView.apply(listBukuPanel);
         }
         SwingUtilities.updateComponentTreeUI(listBukuPanel);
@@ -225,7 +232,8 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         tabbedPanel.setForeground(new java.awt.Color(255, 255, 255));
         tabbedPanel.setToolTipText("");
         tabbedPanel.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        tabbedPanel.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        tabbedPanel.setFont(new CustomFont().getFont("bahnschrift", 0, 18)
+        );
 
         dashboardPanel.setBackground(new java.awt.Color(75, 75, 75));
         dashboardPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -252,13 +260,13 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         listBukuText.setText("Daftar Buku");
         jPanel2.add(listBukuText, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 40, -1, -1));
 
-        pencarianText.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        pencarianText.setFont(new CustomFont().getFont("tahoma",18));
         pencarianText.setForeground(new java.awt.Color(255, 255, 255));
         pencarianText.setText("Pencarian:");
         jPanel2.add(pencarianText, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 20, -1, -1));
 
         fieldPencarian.setBackground(new java.awt.Color(35, 35, 35));
-        fieldPencarian.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        fieldPencarian.setFont(new CustomFont().getFont("tahoma",14));
         fieldPencarian.setForeground(new java.awt.Color(255, 255, 255));
         fieldPencarian.setText("ISBN / Judul Buku / Pengarang / Penerbit");
         fieldPencarian.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED));
@@ -357,28 +365,31 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         leftPanel.setBackground(new java.awt.Color(51, 51, 51));
         leftPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        versionText.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        versionText.setFont(new CustomFont().getFont("tahoma", 14)
+        );
         versionText.setForeground(new java.awt.Color(204, 204, 204));
         versionText.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         versionText.setText("V 1.0");
         leftPanel.add(versionText, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 70, 250, 30));
 
         titleText.setBackground(new java.awt.Color(255, 205, 158));
-        titleText.setFont(new java.awt.Font("Bebas", 0, 36)); // NOI18N
+        titleText.setFont(new CustomFont().getFont("bebas",36));
         titleText.setForeground(new java.awt.Color(255, 205, 158));
         titleText.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         titleText.setText("K-SIR   BOOK");
         leftPanel.add(titleText, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 20, 250, -1));
 
         ubahProfilButton.setBackground(new java.awt.Color(51, 51, 51));
-        ubahProfilButton.setFont(new java.awt.Font("Bahnschrift", 1, 18)); // NOI18N
+        ubahProfilButton.setFont(new CustomFont().getFont("bahnschrift", 1, 18)
+        );
         ubahProfilButton.setForeground(new java.awt.Color(255, 255, 255));
         ubahProfilButton.setText("UBAH PROFILE");
         ubahProfilButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         leftPanel.add(ubahProfilButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 563, 190, 50));
 
         logoutButton.setBackground(new java.awt.Color(51, 51, 51));
-        logoutButton.setFont(new java.awt.Font("Bahnschrift", 1, 18)); // NOI18N
+        logoutButton.setFont(new CustomFont().getFont("bahnschrift", 1, 18)
+        );
         logoutButton.setForeground(new java.awt.Color(255, 255, 255));
         logoutButton.setText("LOGOUT");
         logoutButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -389,26 +400,30 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         });
         leftPanel.add(logoutButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 630, 190, 50));
 
-        selamatDatangText.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        selamatDatangText.setFont(new CustomFont().getFont("bahnschrift", 18)
+        );
         selamatDatangText.setForeground(new java.awt.Color(255, 255, 255));
+        selamatDatangText.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         selamatDatangText.setText("Selamat Datang");
-        leftPanel.add(selamatDatangText, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 120, -1, -1));
+        leftPanel.add(selamatDatangText, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 120, 250, -1));
 
         namaKasirText.setBackground(new java.awt.Color(250, 250, 250));
-        namaKasirText.setFont(new java.awt.Font("Bebas", 1, 36)); // NOI18N
+        namaKasirText.setFont(new CustomFont().getFont("bebas", 1, 36)
+        );
         namaKasirText.setForeground(new java.awt.Color(250, 250, 250));
         namaKasirText.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         namaKasirText.setText("Nama Kasir");
         leftPanel.add(namaKasirText, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, 230, -1));
 
-        noTeleponText.setFont(new java.awt.Font("Bahnschrift", 1, 14)); // NOI18N
+        noTeleponText.setFont(new CustomFont().getFont("bahnshrift",1,14));
         noTeleponText.setForeground(new java.awt.Color(204, 204, 204));
         noTeleponText.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         noTeleponText.setText("Nomor Telepon");
         leftPanel.add(noTeleponText, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, 210, -1));
         leftPanel.add(sep1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 150, 210, 10));
 
-        curTime.setFont(new java.awt.Font("Bebas", 1, 18)); // NOI18N
+        curTime.setFont(new CustomFont().getFont("bebas", 1, 18)
+        );
         curTime.setForeground(new java.awt.Color(255, 255, 255));
         curTime.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         curTime.setText("00:00");

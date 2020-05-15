@@ -42,5 +42,4 @@ public class SistemTokoBuku {
             login.setVisible(true);
         }
     }
-    
 }

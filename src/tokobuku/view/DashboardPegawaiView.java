@@ -1,8 +1,11 @@
 package tokobuku.view;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -14,7 +17,9 @@ import javax.swing.Timer;
 import java.util.prefs.BackingStoreException;
 import javax.swing.SwingUtilities;
 import tokobuku.impl.BukuImpl;
+import tokobuku.impl.TransaksiImpl;
 import tokobuku.model.Buku;
+import tokobuku.model.Transaksi;
 import tokobuku.util.DragWindow;
 import tokobuku.util.PreferencedHelper;
 import tokobuku.util.CustomFont;
@@ -28,10 +33,10 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private static final PreferencedHelper PREFS = new PreferencedHelper();
     private final BukuImpl buku = new BukuImpl();
     private List<Buku> listBuku = new ArrayList<>();
+    private final TransaksiImpl transaksi = new TransaksiImpl();
+    private List<Transaksi> listTransaksi = new ArrayList<>();
     private int totalBuku = 0;
-    private final int columns = 2;
-    private int rows = 0;
-    private float height = 0;
+    private int totalTransaksi = 0;
 
     /**
      * Creates new form DashboardPegawaiView
@@ -43,18 +48,26 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         namaKasirText.setText(PREFS.getName());
         noTeleponText.setText(PREFS.getTel());
 
-        Thread thread1 = new Thread() {
+        Thread threadBuku = new Thread("thread-buku") {
             @Override
             public void run() {
                 loadDataBuku(0);
             }
         };
+        
+        Thread threadTransaksi = new Thread("thread-transaksi") {
+            @Override
+            public void run() {
+                loadDataTransaksi();
+            }
+        };
 
-        thread1.start();
+        threadBuku.start();
+        threadTransaksi.start();
     }
 
     private synchronized void loadDataBuku(int opt) {
-        listBukuPanel.removeAll();
+        panelListBuku.removeAll();
         try {
             switch (opt) {
                 case 1:
@@ -80,7 +93,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     }
 
     private synchronized void searchBuku(String keywords) {
-        listBukuPanel.removeAll();
+        panelListBuku.removeAll();
         try {
             listBuku = buku.searchBuku(keywords);
             totalBuku = listBuku.size();
@@ -91,12 +104,16 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     }
     
     private void setListBukuPanel() {
+        final int columns = 2;
         // Operator ternary menghitung jumlah baris
-        rows = totalBuku % columns != 0 ? (totalBuku / columns) + 1 : (totalBuku / columns);
+        int rows = totalBuku % columns != 0 ? (totalBuku / columns) + 1 : (totalBuku / columns);
         // Menghitung panjang dari panel listBukuPanel
-        height = (rows * 150) + (rows * 5);
-        listBukuPanel.setLayout(new java.awt.GridLayout(rows, columns, 10, 10));
-        listBukuPanel.setPreferredSize(new java.awt.Dimension(1045, (int) height));
+        float height = (rows * 150) + (rows * 5);
+        panelListBuku.setLayout(new java.awt.GridLayout(rows, columns, 10, 10));
+        if (rows < 4) {
+            scrollPanelListBuku.setPreferredSize(new Dimension(1030, (int) height + 5));
+        }
+        panelListBuku.setPreferredSize(new java.awt.Dimension(1045, (int) height));
         for (int i = 0; i < totalBuku; i++) {
             BookPanelView bookPanelView = new BookPanelView();
             try {
@@ -113,9 +130,44 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             } catch (Exception ex) {
                 Logger.getLogger(DashboardPegawaiView.class.getName()).log(Level.SEVERE, null, ex);
             }
-            bookPanelView.apply(listBukuPanel);
+            bookPanelView.apply(panelListBuku);
         }
-        SwingUtilities.updateComponentTreeUI(listBukuPanel);
+        SwingUtilities.updateComponentTreeUI(panelListBuku);
+    }
+    
+    private synchronized void loadDataTransaksi() {
+        panelListTransaksi.removeAll();
+        try {
+            listTransaksi = transaksi.load();
+            totalTransaksi = listTransaksi.size();
+        } catch (SQLException e) {
+            System.out.println("Error Fetching Data Transaksi!");
+        }
+        setListTransaksiPanel();
+    }
+    
+    private void setListTransaksiPanel() {
+        int rows = totalTransaksi;
+        float height = (rows * 100);
+        panelListTransaksi.setLayout(new GridLayout(rows, 1, 0, 0));
+        if (rows < 6) {
+            scrollPanelTransaksi.setPreferredSize(new Dimension(410, (int) height + 5));
+        }
+        panelListTransaksi.setPreferredSize(new Dimension(407, (int) height));
+        for (int i = 0; i < totalTransaksi; i++) {
+            TransaksiPanelView transaksiPanelView = TransaksiPanelView.getInsance();
+            int j = i;
+            try {
+                transaksiPanelView.setProperty(
+                        j,
+                        listTransaksi.get(i).getTanggal().toString(),
+                        listTransaksi.get(i).getNamaPelanggan());
+            } catch (Exception ex) {
+                Logger.getLogger(DashboardPegawaiView.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            transaksiPanelView.apply(panelListTransaksi);
+        }
+        SwingUtilities.updateComponentTreeUI(panelListTransaksi);
     }
 
     /**
@@ -145,12 +197,12 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         sortingText = new javax.swing.JLabel();
         sep2 = new javax.swing.JSeparator();
         sortingComboBox = new javax.swing.JComboBox<>();
-        listBukuScrollPanel = new javax.swing.JScrollPane();
-        listBukuPanel = new javax.swing.JPanel();
+        scrollPanelListBuku = new javax.swing.JScrollPane();
+        panelListBuku = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
-        jPanel3 = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jPanel5 = new javax.swing.JPanel();
+        panelTransaksi = new javax.swing.JPanel();
+        scrollPanelTransaksi = new javax.swing.JScrollPane();
+        panelListTransaksi = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jPanel6 = new javax.swing.JPanel();
@@ -255,7 +307,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         jPanel2.setBackground(new java.awt.Color(75, 75, 75));
         jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        listBukuText.setFont(new java.awt.Font("Bahnschrift", 0, 36)); // NOI18N
+        listBukuText.setFont(new CustomFont().getFont("bahnschrift", 36));
         listBukuText.setForeground(new java.awt.Color(255, 255, 255));
         listBukuText.setText("Daftar Buku");
         jPanel2.add(listBukuText, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 40, -1, -1));
@@ -280,7 +332,8 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         jPanel2.add(fieldPencarian, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 50, 190, 40));
 
         buttonPencarian.setBackground(new java.awt.Color(51, 51, 51));
-        buttonPencarian.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        buttonPencarian.setFont(new CustomFont().getFont(1, 12)
+        );
         buttonPencarian.setForeground(new java.awt.Color(255, 255, 255));
         buttonPencarian.setText("CARI");
         buttonPencarian.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -291,7 +344,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         });
         jPanel2.add(buttonPencarian, new org.netbeans.lib.awtextra.AbsoluteConstraints(960, 50, 60, 40));
 
-        sortingText.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        sortingText.setFont(new CustomFont().getFont(18));
         sortingText.setForeground(new java.awt.Color(255, 255, 255));
         sortingText.setText("Urutkan berdasarkan:");
         jPanel2.add(sortingText, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 20, -1, -1));
@@ -301,7 +354,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         jPanel2.add(sep2, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 20, 10, 80));
 
         sortingComboBox.setBackground(new java.awt.Color(35, 35, 35));
-        sortingComboBox.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        sortingComboBox.setFont(new CustomFont().getFont(14));
         sortingComboBox.setForeground(new java.awt.Color(255, 255, 255));
         sortingComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { " ", "ISBN", "Judul Buku", "Penulis", "Penerbit" }));
         sortingComboBox.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED));
@@ -315,39 +368,45 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
 
         bukuPanel.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1045, 120));
 
-        listBukuScrollPanel.setBackground(new java.awt.Color(75, 75, 75));
-        listBukuScrollPanel.setBorder(null);
-        listBukuScrollPanel.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        listBukuScrollPanel.setViewportBorder(javax.swing.BorderFactory.createEtchedBorder());
+        scrollPanelListBuku.setBackground(new java.awt.Color(75, 75, 75));
+        scrollPanelListBuku.setBorder(null);
+        scrollPanelListBuku.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPanelListBuku.setViewportBorder(javax.swing.BorderFactory.createEtchedBorder());
+        scrollPanelListBuku.setPreferredSize(new java.awt.Dimension(1030, 545));
 
-        listBukuPanel.setBackground(new java.awt.Color(75, 75, 75));
-        listBukuPanel.setMinimumSize(new java.awt.Dimension(1045, 0));
-        listBukuPanel.setPreferredSize(new java.awt.Dimension(1045, 1045));
-        listBukuPanel.setLayout(new java.awt.GridLayout(1, 0, 20, 20));
-        listBukuScrollPanel.setViewportView(listBukuPanel);
+        panelListBuku.setBackground(new java.awt.Color(75, 75, 75));
+        panelListBuku.setMinimumSize(new java.awt.Dimension(1045, 0));
+        panelListBuku.setPreferredSize(new java.awt.Dimension(1045, 1045));
+        panelListBuku.setLayout(new java.awt.GridLayout(1, 0, 20, 20));
+        scrollPanelListBuku.setViewportView(panelListBuku);
 
-        bukuPanel.add(listBukuScrollPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 120, 1030, 545));
+        bukuPanel.add(scrollPanelListBuku, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 120, -1, -1));
 
         tabbedPanel.addTab("  Daftar Buku  ", bukuPanel);
 
         jPanel1.setBackground(new java.awt.Color(85, 85, 85));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel3.setBackground(new java.awt.Color(51, 51, 51));
-        jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+        panelTransaksi.setBackground(new java.awt.Color(51, 51, 51));
+        panelTransaksi.setMaximumSize(new java.awt.Dimension(410, 670));
+        panelTransaksi.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel5.setBackground(new java.awt.Color(60, 60, 60));
-        jPanel5.setLayout(new javax.swing.BoxLayout(jPanel5, javax.swing.BoxLayout.Y_AXIS));
-        jScrollPane1.setViewportView(jPanel5);
+        scrollPanelTransaksi.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        scrollPanelTransaksi.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPanelTransaksi.setMinimumSize(new java.awt.Dimension(410, 570));
+        scrollPanelTransaksi.setPreferredSize(new java.awt.Dimension(410, 570));
 
-        jPanel3.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 100, 410, 570));
+        panelListTransaksi.setLayout(new java.awt.GridLayout());
+        scrollPanelTransaksi.setViewportView(panelListTransaksi);
 
-        jLabel3.setFont(new java.awt.Font("Bahnschrift", 1, 24)); // NOI18N
+        panelTransaksi.add(scrollPanelTransaksi, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 100, -1, -1));
+
+        jLabel3.setFont(new CustomFont().getFont("bahnschrift", Font.BOLD, 24));
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel3.setText("History Pembelian");
-        jPanel3.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 9, 260, 80));
+        jLabel3.setText("Transaksi Pembelian");
+        panelTransaksi.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 10, 260, 80));
 
-        jPanel1.add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 410, 670));
+        jPanel1.add(panelTransaksi, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 410, 670));
 
         jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -408,8 +467,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         leftPanel.add(selamatDatangText, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 120, 250, -1));
 
         namaKasirText.setBackground(new java.awt.Color(250, 250, 250));
-        namaKasirText.setFont(new CustomFont().getFont("bebas", 1, 36)
-        );
+        namaKasirText.setFont(new CustomFont().getFont("bebas", Font.BOLD, 36));
         namaKasirText.setForeground(new java.awt.Color(250, 250, 250));
         namaKasirText.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         namaKasirText.setText("Nama Kasir");
@@ -593,21 +651,21 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JPanel leftPanel;
-    private javax.swing.JPanel listBukuPanel;
-    private javax.swing.JScrollPane listBukuScrollPanel;
     private javax.swing.JLabel listBukuText;
     private javax.swing.JButton logoutButton;
     private javax.swing.JLabel minimizedIcon;
     private javax.swing.JLabel namaKasirText;
     private javax.swing.JLabel noTeleponText;
+    private javax.swing.JPanel panelListBuku;
+    private javax.swing.JPanel panelListTransaksi;
+    private javax.swing.JPanel panelTransaksi;
     private javax.swing.JLabel pencarianText;
+    private javax.swing.JScrollPane scrollPanelListBuku;
+    private javax.swing.JScrollPane scrollPanelTransaksi;
     private javax.swing.JLabel selamatDatangText;
     private javax.swing.JSeparator sep1;
     private javax.swing.JSeparator sep2;

@@ -16,13 +16,12 @@ import tokobuku.util.PreferencedHelper;
 public class LoginImpl implements LoginInterface {
 
     private final static PreferencedHelper PREFS = new PreferencedHelper();
-    private final static Pegawai DATA = new Pegawai();
 
     @Override
     public String doLogin(String username, String password) throws SQLException {
         String result;
         try (Connection con = ConnectionUtil.getDB()) {
-            String sql = "SELECT * FROM tb_pegawai WHERE username=? AND password=?";
+            String sql = "SELECT * FROM tb_pegawai WHERE username=? AND pwd=?";
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, username);
             ps.setString(2, password);

@@ -16,15 +16,13 @@ import tokobuku.util.CustomFont;
  */
 public class TransaksiPanelView {
     
-    private static final TransaksiPanelView INSTANCE = new TransaksiPanelView();
-    
     private final JPanel basePanel;
     private final JPanel baseNumberPanel;
     private final JLabel number;
     private final JLabel tanggal;
     private final JLabel namaPembeli;
     
-    private TransaksiPanelView(){
+    public TransaksiPanelView(){
         basePanel = new JPanel();
         baseNumberPanel = new JPanel();
         number = new JLabel();
@@ -36,10 +34,6 @@ public class TransaksiPanelView {
         baseNumberPanel.setBackground(new Color(223, 144, 49));
         basePanel.add(baseNumberPanel, new AbsoluteConstraints(10, 10, 80, 80));
     };
-    
-    public static TransaksiPanelView getInsance() {
-        return INSTANCE;
-    }
     
     public void setProperty(
             int tNumber, 

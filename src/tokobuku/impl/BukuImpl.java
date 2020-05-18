@@ -22,17 +22,46 @@ public class BukuImpl implements BukuInterface {
 
     @Override
     public void insert(Buku buku) throws SQLException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        String sql = "CALL insert_buku(?,?,?,?,?,?,?,?,?)";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, buku.getIsbn());
+            ps.setString(2, buku.getKategori());
+            ps.setString(3, buku.getJudul_buku());
+            ps.setString(4, buku.getPenulis());
+            ps.setString(5, buku.getPenerbit());
+            ps.setString(6, buku.getTahun());
+            ps.setFloat(7, buku.getHarga_pokok());
+            ps.setFloat(8, buku.getHarga_jual());
+            ps.setBytes(9, buku.getImage());
+            ps.executeUpdate();
+        }
     }
 
     @Override
     public void update(Buku buku) throws SQLException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        String sql = "CALL update_buku(?,?,?,?,?,?,?,?,?,?)";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, buku.getIsbn());
+            ps.setString(2, buku.getIsbn());
+            ps.setString(3, buku.getKategori());
+            ps.setString(4, buku.getJudul_buku());
+            ps.setString(5, buku.getPenulis());
+            ps.setString(6, buku.getPenerbit());
+            ps.setString(7, buku.getTahun());
+            ps.setFloat(8, buku.getHarga_pokok());
+            ps.setFloat(9, buku.getHarga_jual());
+            ps.setBytes(10, buku.getImage());
+            ps.executeUpdate();
+        }
     }
 
     @Override
     public void delete(Buku buku) throws SQLException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        String sql = "CALL delete_buku(?)";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, buku.getIsbn());
+            ps.executeUpdate();
+        }
     }
 
     @Override

@@ -14,6 +14,7 @@ public class Transaksi {
     private String namaPetugas;
     private Date tanggal;
     private Double nominalBayar;
+    private int totalBayar;
 
     public String getNamaPelanggan() {
         return namaPelanggan;
@@ -69,5 +70,13 @@ public class Transaksi {
 
     public void setIdPetugas(int idPetugas) {
         this.idPetugas = idPetugas;
+    }
+
+    public int getTotalBayar() {
+        return totalBayar;
+    }
+
+    public void setTotalBayar(int totalBayar) {
+        this.totalBayar = totalBayar;
     }
 }

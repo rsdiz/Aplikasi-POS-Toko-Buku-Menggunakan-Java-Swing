@@ -77,6 +77,7 @@ public class TransaksiImpl implements TransaksiInterface{
         transaksi.setNamaPetugas(res.getString("nama_petugas"));
         transaksi.setTanggal(res.getDate("tanggal"));
         transaksi.setNominalBayar(Double.valueOf(res.getInt("bayar")));
+        transaksi.setTotalBayar(res.getInt("totalbayar"));
     }
     
 }

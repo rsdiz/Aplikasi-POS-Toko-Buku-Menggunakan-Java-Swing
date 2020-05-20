@@ -1,20 +1,21 @@
 package tokobuku.view;
 
 import java.awt.Color;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.plaf.ColorUIResource;
 import org.netbeans.lib.awtextra.AbsoluteLayout;
 import tokobuku.util.CustomFont;
+import tokobuku.util.Formatter;
 
 /**
  *
  * @author Rosyid Iz
  */
 public class BookPanelView {
+    
+    private final Formatter<Float> floatF;
 
     private JLabel imageBuku = new JLabel();
     private final JLabel judulBukuText;
@@ -27,6 +28,7 @@ public class BookPanelView {
     private final JPanel bookPanel;
 
     public BookPanelView() {
+        this.floatF = new Formatter<>();
         this.judulBukuText = new JLabel();
         this.isbnText = new JLabel();
         this.penulisText = new JLabel();
@@ -100,15 +102,8 @@ public class BookPanelView {
 //        new java.awt.Font("Tahoma", 1, 24)
         hargaJualText.setFont(new CustomFont().getFont().deriveFont(1, 20));
         hargaJualText.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        DecimalFormat format = (DecimalFormat) DecimalFormat.getCurrencyInstance();
-        DecimalFormatSymbols formatRupiah = new DecimalFormatSymbols();
-        formatRupiah.setCurrencySymbol("Rp.");
-        formatRupiah.setMonetaryDecimalSeparator(',');
-        formatRupiah.setGroupingSeparator('.');
-        format.setDecimalFormatSymbols(formatRupiah);
-        format.setMaximumFractionDigits(0);
-        hargaJualText.setText(format.format(harga_jual));
-        hargaJualText.setToolTipText("Harga: "+format.format(harga_jual));
+        hargaJualText.setText(String.valueOf(floatF.rupiah(harga_jual)));
+        hargaJualText.setToolTipText("Harga: "+floatF.rupiah(harga_jual));
         bookPanel.add(hargaJualText, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 80, 140, 40));
     }
     

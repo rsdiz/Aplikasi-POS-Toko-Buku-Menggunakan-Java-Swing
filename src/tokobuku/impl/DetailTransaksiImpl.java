@@ -22,15 +22,18 @@ import tokobuku.util.ConnectionUtil;
 public class DetailTransaksiImpl implements DetailTransaksiInterface{
     
     private final Connection con = ConnectionUtil.getDB();
+    public List<DetailTransaksi> listDetailTransaksis = new ArrayList<>();
 
     @Override
     public void insert(DetailTransaksi detailtrx) throws SQLException {
-        String sql = "CALL insert_detailtrx(?,?,?)";
+        String sql = "CALL insert_detailtrx(?,?,?,?)";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, detailtrx.getId_trx());
-            ps.setString(2, detailtrx.getIsbn());
-            ps.setInt(3, detailtrx.getBanyak());
+            ps.setInt(1, detailtrx.getId_detail_trx());
+            ps.setInt(2, detailtrx.getId_trx());
+            ps.setString(3, detailtrx.getIsbn());
+            ps.setInt(4, detailtrx.getBanyak());
             ps.executeUpdate();
+            listDetailTransaksis.add(detailtrx);
         }
     }
 
@@ -43,6 +46,7 @@ public class DetailTransaksiImpl implements DetailTransaksiInterface{
             ps.setString(3, detailtrx.getIsbn());
             ps.setInt(4, detailtrx.getBanyak());
             ps.executeUpdate();
+            listDetailTransaksis.set(detailtrx.getId_detail_trx()-1, detailtrx);
         }
     }
 
@@ -52,12 +56,12 @@ public class DetailTransaksiImpl implements DetailTransaksiInterface{
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, detailtrx.getId_detail_trx());
             ps.executeUpdate();
+            listDetailTransaksis.remove(detailtrx.getId_detail_trx()-1);
         }
     }
 
     @Override
     public List<DetailTransaksi> load(int select_id) throws SQLException {
-        List<DetailTransaksi> listDetailTransaksis = new ArrayList<>();
         String sql = "SELECT * FROM data_detail_trx WHERE id_trx = ?";
         try(PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, select_id);

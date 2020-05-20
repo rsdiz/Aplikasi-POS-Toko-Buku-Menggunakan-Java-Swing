@@ -18,6 +18,7 @@ import tokobuku.util.ConnectionUtil;
 public class TransaksiImpl implements TransaksiInterface{
     
     private final Connection con = ConnectionUtil.getDB();
+    public List<Transaksi> listTransaksis = new ArrayList<>();
 
     @Override
     public void insert(Transaksi transaksi) throws SQLException {
@@ -29,6 +30,7 @@ public class TransaksiImpl implements TransaksiInterface{
             ps.setString(4, transaksi.getTanggal().toString());
             ps.setInt(5, transaksi.getNominalBayar().intValue());
             ps.executeUpdate();
+            listTransaksis.add(transaksi);
         }
     }
 
@@ -42,6 +44,7 @@ public class TransaksiImpl implements TransaksiInterface{
             ps.setString(4, transaksi.getTanggal().toString());
             ps.setInt(5, transaksi.getNominalBayar().intValue());
             ps.executeUpdate();
+            listTransaksis.set(transaksi.getId()-1, transaksi);
         }
     }
 
@@ -51,22 +54,22 @@ public class TransaksiImpl implements TransaksiInterface{
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, transaksi.getId());
             ps.executeUpdate();
+            listTransaksis.remove(transaksi.getId()-1);
         }
     }
 
     @Override
     public List<Transaksi> load() throws SQLException {
-        List<Transaksi> listTransaksi = new ArrayList<>();
         String sql = "SELECT * FROM data_transaksi";
         try (Statement statement = con.createStatement()) {
             ResultSet res = statement.executeQuery(sql);
             while (res.next()) {
                 Transaksi transaksi = new Transaksi();
                 addTransaksiToList(transaksi, res);
-                listTransaksi.add(transaksi);
+                listTransaksis.add(transaksi);
             }
         }
-        return listTransaksi;
+        return listTransaksis;
     }
     
     private void addTransaksiToList(Transaksi transaksi, ResultSet res) throws SQLException {

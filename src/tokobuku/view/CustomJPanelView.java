@@ -48,12 +48,18 @@ public class CustomJPanelView {
         resetUI();
     }
 
+    public int displayConfirmDialog(Component parent, String message, String title) {
+        int value = JOptionPane.showConfirmDialog(parent, message, title, JOptionPane.YES_NO_CANCEL_OPTION);
+        resetUI();
+        return value;
+    }
+
     private void resetUI() {
-        ui.put("OptionPane.background", new ColorUIResource(238,238,238));
-        ui.put("Panel.background", new ColorUIResource(238,238,238));
-        ui.put("OptionPane.warningDialog.titlePane.background", new ColorUIResource(238,238,238));
-        ui.put("OptionPane.warningDialog.titlePane.foreground", new ColorUIResource(0,0,0));
-        ui.put("OptionPane.messageForeground", new ColorUIResource(0,0,0));
-        ui.put("OptionPane.foreground", new ColorUIResource(0,0,0));
+        ui.put("OptionPane.background", new ColorUIResource(238, 238, 238));
+        ui.put("Panel.background", new ColorUIResource(238, 238, 238));
+        ui.put("OptionPane.warningDialog.titlePane.background", new ColorUIResource(238, 238, 238));
+        ui.put("OptionPane.warningDialog.titlePane.foreground", new ColorUIResource(0, 0, 0));
+        ui.put("OptionPane.messageForeground", new ColorUIResource(0, 0, 0));
+        ui.put("OptionPane.foreground", new ColorUIResource(0, 0, 0));
     }
 }

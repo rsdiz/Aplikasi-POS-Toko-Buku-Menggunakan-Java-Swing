@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import tokobuku.interf.LoginInterface;
 import tokobuku.model.Pegawai;
 import tokobuku.util.ConnectionUtil;
+import tokobuku.util.PasswordUtils;
 import tokobuku.util.PreferencedHelper;
 
 /**
@@ -21,21 +22,25 @@ public class LoginImpl implements LoginInterface {
     public String doLogin(String username, String password) throws SQLException {
         String result;
         try (Connection con = ConnectionUtil.getDB()) {
-            String sql = "SELECT * FROM tb_pegawai WHERE username=? AND pwd=?";
+            String sql = "SELECT * FROM tb_pegawai WHERE username=?";
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, username);
-            ps.setString(2, password);
             ResultSet res = ps.executeQuery();
             if (res.next()) {
-                result = "SUCCESS";
-                saveDataUser(
-                        res.getInt("id_kasir"),
-                        res.getString("nama"),
-                        res.getString("alamat"),
-                        res.getString("telepon"),
-                        res.getString("username"));
+                boolean isMatch = PasswordUtils.veriifyPassword(password, res.getString("pwd"), res.getString("salt"));
+                if (isMatch) {
+                    result = "200";
+                    saveDataUser(
+                            res.getInt("id_kasir"),
+                            res.getString("nama"),
+                            res.getString("alamat"),
+                            res.getString("telepon"),
+                            res.getString("username"));
+                } else {
+                    result = "406";
+                }
             } else {
-                result = "FAILED";
+                result = "404";
             }
         }
         return result;

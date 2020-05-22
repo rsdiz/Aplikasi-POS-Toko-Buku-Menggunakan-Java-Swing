@@ -44,7 +44,6 @@ public class LoginView extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         loginPanel = new javax.swing.JPanel();
         loginButton = new javax.swing.JButton();
-        lostPassword = new javax.swing.JLabel();
         panelUsername = new javax.swing.JPanel();
         iconUser = new javax.swing.JLabel();
         fieldUsername = new javax.swing.JTextField();
@@ -130,7 +129,7 @@ public class LoginView extends javax.swing.JFrame {
         loginPanel.setPreferredSize(new java.awt.Dimension(512, 512));
         loginPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        loginButton.setBackground(new java.awt.Color(199, 102, 36));
+        loginButton.setBackground(new java.awt.Color(51, 51, 51));
         loginButton.setFont(new CustomFont().getFont("tahoma", 1, 12)
         );
         loginButton.setForeground(new java.awt.Color(255, 255, 255));
@@ -144,11 +143,6 @@ public class LoginView extends javax.swing.JFrame {
             }
         });
         loginPanel.add(loginButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 310, 110, 40));
-
-        lostPassword.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        lostPassword.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lostPassword.setText("Lupa Password?");
-        loginPanel.add(lostPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 310, 100, 40));
 
         panelUsername.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(153, 153, 153)));
         panelUsername.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -207,11 +201,11 @@ public class LoginView extends javax.swing.JFrame {
         titleText.setText("K-SIR   BOOK");
         loginPanel.add(titleText, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 20, 250, 60));
 
-        descriptionText.setFont(new java.awt.Font("Titillium Web", 1, 18)); // NOI18N
+        descriptionText.setFont(new java.awt.Font("Bahnschrift", 1, 18)); // NOI18N
         descriptionText.setForeground(new java.awt.Color(99, 20, 0));
         descriptionText.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        descriptionText.setText("Sistem Kasir: Toko Buku");
-        loginPanel.add(descriptionText, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 80, 250, -1));
+        descriptionText.setText("Login");
+        loginPanel.add(descriptionText, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 80, 250, 40));
 
         backgroundPanel.add(loginPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 50, 420, 410));
 
@@ -269,14 +263,23 @@ public class LoginView extends javax.swing.JFrame {
         CustomJPanelView jOpt = new CustomJPanelView();
         jOpt.setPanel("black");
         try {
-            if (login.doLogin(username, password).equals("SUCCESS")) {
-                jOpt.displayInfo(this, "Berhasil Login!", "LOGIN");
-                this.setVisible(false);
-                DashboardPegawaiView dash = new DashboardPegawaiView();
-                this.dispose();
-                dash.setVisible(true);
-            } else {
-                jOpt.displayError(this, "Username atau Password yang dimasukkan salah, harap ulangi kembali!", "LOGIN");
+            String resultCode = login.doLogin(username, password);
+            switch (resultCode) {
+                case "200":
+                    jOpt.displayInfo(this, "Berhasil Login!", "LOGIN");
+                    this.setVisible(false);
+                    DashboardPegawaiView dash = new DashboardPegawaiView();
+                    this.dispose();
+                    dash.setVisible(true);
+                    break;
+                case "406":
+                    jOpt.displayError(this, "Username atau Password yang dimasukkan salah, harap ulangi kembali!", "LOGIN");
+                    break;
+                case "404":
+                    jOpt.displayError(this, "Username tidak ditemukan, harap ulangi kembali!", "LOGIN");
+                    break;
+                default:
+                    break;
             }
         } catch (SQLException ex) {
             jOpt.displayError(this, "Terjadi masalah dengan database!", "Database Error!");
@@ -333,7 +336,6 @@ public class LoginView extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JButton loginButton;
     private javax.swing.JPanel loginPanel;
-    private javax.swing.JLabel lostPassword;
     private javax.swing.JLabel minimizedIcon;
     private javax.swing.JPanel panelPassword;
     private javax.swing.JPanel panelUsername;

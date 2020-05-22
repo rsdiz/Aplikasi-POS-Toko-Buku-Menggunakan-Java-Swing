@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.KeyAdapter;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,14 +19,17 @@ import javax.swing.Timer;
 import java.util.prefs.BackingStoreException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.InputVerifier;
 import javax.swing.JComponent;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import tokobuku.impl.BukuImpl;
+import tokobuku.impl.DetailTransaksiImpl;
 import tokobuku.impl.PelangganImpl;
 import tokobuku.impl.TransaksiImpl;
 import tokobuku.model.Buku;
+import tokobuku.model.DetailTransaksi;
 import tokobuku.model.Pelanggan;
 import tokobuku.model.Transaksi;
 import tokobuku.util.DragWindow;
@@ -48,14 +52,19 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private List<Transaksi> listTransaksi = transaksi.listTransaksis;
     private final PelangganImpl pelanggan = new PelangganImpl();
     private List<Pelanggan> listPelanggans = pelanggan.listPelanggans;
+    private DetailTransaksiImpl detailTrx = new DetailTransaksiImpl();
+    private List<DetailTransaksi> listDetailTransaksis = detailTrx.listDetailTransaksis;
 
     private int totalBuku = 0;
     private int totalTransaksi = 0;
     private int totalPelanggan = 0;
 
-    private Boolean inputNama = false;
-    private Boolean inputAlamat = false;
-    private Boolean inputTelp = false;
+    private Boolean inputNamaP = false;
+    private Boolean inputAlamatP = false;
+    private Boolean inputTelpP = false;
+
+    private Boolean inputNamaT = false;
+    private Boolean inputUangT = false;
 
     /**
      * Verifikasi input nomor ponsel
@@ -69,7 +78,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                 Matcher matcher = pattern.matcher(textField.getText());
                 if (matcher.matches()) {
                     input.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, Color.GREEN, Color.DARK_GRAY));
-                    inputTelp = true;
+                    inputTelpP = true;
                     return true;
                 } else {
                     input.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, Color.RED, Color.DARK_GRAY));
@@ -98,10 +107,10 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             } else {
                 switch (input.getName()) {
                     case "tf_nama":
-                        inputNama = true;
+                        inputNamaP = true;
                         break;
                     case "tf_alamat":
-                        inputAlamat = true;
+                        inputAlamatP = true;
                         break;
                 }
                 input.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, Color.GREEN, Color.DARK_GRAY));
@@ -119,10 +128,21 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             JTextField textField = (JTextField) input;
             try {
                 int number = Integer.parseInt(textField.getText());
+                String tb[] = tf_totalBayar.getText().split(" ");
+                tb = tb[1].split(",");
+                String tb1 = tb[0].replace(".", "");
                 input.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
-                return true;
+                if (number < Integer.parseInt(tb1)) {
+                    input.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, Color.RED, Color.DARK_GRAY));
+                    inputUangT = false;
+                    return false;
+                } else {
+                    inputUangT = number != 0;
+                    return true;
+                }
             } catch (NumberFormatException e) {
                 input.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, Color.RED, Color.DARK_GRAY));
+                inputUangT = false;
                 return false;
             }
         }
@@ -287,7 +307,8 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     }
 
     /**
-     * Mengambil data transaksi dari list, kemudian ditampilkan ke daftar transaksi
+     * Mengambil data transaksi dari list, kemudian ditampilkan ke daftar
+     * transaksi
      */
     private synchronized void loadDataTransaksi() {
         listTransaksi = transaksi.listTransaksis;
@@ -312,20 +333,17 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
 
         for (int i = 0, j = i + 1; i < totalTransaksi; i++, j++) {
             TransaksiPanelView transaksiPanelView = new TransaksiPanelView(j);
-            try {
-                transaksiPanelView.setTransaksi(listTransaksi.get(i));
-                transaksiPanelView.initJLabel(textNoTransaksiDT, textNamaPelangganDT, textNamaPegawaiDT, textBayarDT, textTotalDT, textTanggalDT);
-                transaksiPanelView.initBase(panelDetailTransaksi, scrollPanelDT, panelDT, panelInfo, panelTambahTransaksi, buttonAddTransaksi);
-                transaksiPanelView.apply(panelListTransaksi);
-            } catch (Exception ex) {
-                Logger.getLogger(DashboardPegawaiView.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            transaksiPanelView.setTransaksi(listTransaksi.get(i));
+            transaksiPanelView.initJLabel(textNoTransaksiDT, textNamaPelangganDT, textNamaPegawaiDT, textBayarDT, textTotalDT, textTanggalDT);
+            transaksiPanelView.initBase(panelDetailTransaksi, scrollPanelDT, panelDT, panelInfo, panelTambahTransaksi, buttonAddTransaksi);
+            transaksiPanelView.apply(panelListTransaksi);
         }
         SwingUtilities.updateComponentTreeUI(panelListTransaksi);
     }
 
     /**
-     * Load data Pelanggan dari database, kemudian menyimpan data ke list Pelanggan
+     * Load data Pelanggan dari database, kemudian menyimpan data ke list
+     * Pelanggan
      */
     private synchronized void syncDataPelanggan() {
         try {
@@ -336,7 +354,8 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     }
 
     /**
-     * Mengambil data Pelanggan dari list Transaksi, kemudian ditampilkan ke daftar pelanggan
+     * Mengambil data Pelanggan dari list Transaksi, kemudian ditampilkan ke
+     * daftar pelanggan
      */
     private synchronized void loadDataPelanggan() {
         listPelanggans = pelanggan.listPelanggans;
@@ -361,12 +380,8 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
 
         for (int i = 0, j = i + 1; i < totalPelanggan; i++, j++) {
             PelangganPanelView pelangganPanelView = new PelangganPanelView(j, pelanggan);
-            try {
-                pelangganPanelView.setPelanggan(listPelanggans.get(i));
-                pelangganPanelView.apply(panelListPelanggan);
-            } catch (Exception e) {
-                Logger.getLogger(DashboardPegawaiView.class.getName()).log(Level.SEVERE, null, e);
-            }
+            pelangganPanelView.setPelanggan(listPelanggans.get(i));
+            pelangganPanelView.apply(panelListPelanggan);
         }
         setCBpelanggan();
         SwingUtilities.updateComponentTreeUI(panelListPelanggan);
@@ -381,7 +396,6 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        frameTambahTransaksi = new javax.swing.JFrame();
         dragPanel = new javax.swing.JPanel();
         textTitleBar = new javax.swing.JLabel();
         minimizedIcon = new javax.swing.JLabel();
@@ -390,7 +404,6 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         tabbedPanel = new javax.swing.JTabbedPane();
         tabDashboard = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
-        jPanel4 = new javax.swing.JPanel();
         tabDaftarBuku = new javax.swing.JPanel();
         headerDaftarBuku = new javax.swing.JPanel();
         listBukuText = new javax.swing.JLabel();
@@ -412,7 +425,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         buttonAddTransaksi = new javax.swing.JButton();
         panelTambahTransaksi = new javax.swing.JPanel();
         scrollPanelDTtambah = new javax.swing.JScrollPane();
-        panelDT1 = new javax.swing.JPanel();
+        panelDTtambah = new javax.swing.JPanel();
         panelTableHeaderTambah = new javax.swing.JPanel();
         panelHeadHarga1 = new javax.swing.JPanel();
         textHarga1 = new javax.swing.JLabel();
@@ -424,21 +437,21 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         textNo1 = new javax.swing.JLabel();
         panelHeadIsbn1 = new javax.swing.JPanel();
         textIsbn1 = new javax.swing.JLabel();
-        textHeaderAddTrx = new javax.swing.JLabel();
-        jSeparator2 = new javax.swing.JSeparator();
         textUangTunaiAdd = new javax.swing.JLabel();
         cb_namaPelanggan = new javax.swing.JComboBox<>();
         textNamaPelangganAdd = new javax.swing.JLabel();
-        btnTambahDataTrx = new javax.swing.JButton();
+        buttonTambahDataTrx = new javax.swing.JButton();
         tf_tanggal = new javax.swing.JTextField();
         jSeparator3 = new javax.swing.JSeparator();
         panelTotalTambah = new javax.swing.JLabel();
-        tf_total = new javax.swing.JTextField();
+        tf_totalBayar = new javax.swing.JTextField();
         textTanggalTambah = new javax.swing.JLabel();
         panelNoTrx = new javax.swing.JPanel();
-        textNoTransaksiAdd = new javax.swing.JLabel();
         textIDTrx = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
+        tf_uangTunai = new javax.swing.JTextField();
+        textNoTransaksiAdd = new javax.swing.JLabel();
+        buttonReset = new javax.swing.JButton();
+        buttonAddItem = new javax.swing.JButton();
         panelInfo = new javax.swing.JPanel();
         textNoTransaksiDT1 = new javax.swing.JLabel();
         panelDetailTransaksi = new javax.swing.JPanel();
@@ -494,29 +507,10 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         curTime = new javax.swing.JLabel();
         backgroundPanel = new javax.swing.JLabel();
 
-        frameTambahTransaksi.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        frameTambahTransaksi.setTitle("Tambah Transaksi");
-        frameTambahTransaksi.setName("frameAddTransaksi"); // NOI18N
-        frameTambahTransaksi.setUndecorated(true);
-        frameTambahTransaksi.setType(java.awt.Window.Type.POPUP);
-
-        javax.swing.GroupLayout frameTambahTransaksiLayout = new javax.swing.GroupLayout(frameTambahTransaksi.getContentPane());
-        frameTambahTransaksi.getContentPane().setLayout(frameTambahTransaksiLayout);
-        frameTambahTransaksiLayout.setHorizontalGroup(
-            frameTambahTransaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        frameTambahTransaksiLayout.setVerticalGroup(
-            frameTambahTransaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
-
-        frameTambahTransaksi.getAccessibleContext().setAccessibleParent(buttonAddTransaksi);
-
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("K-SIR Book: Dashboard");
         setLocationByPlatform(true);
-        setMaximumSize(new java.awt.Dimension(1280, 2147483647));
+        setMaximumSize(new java.awt.Dimension(1920, 1080));
         setName("frameDashboard"); // NOI18N
         setUndecorated(true);
 
@@ -594,10 +588,6 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         jLabel2.setForeground(new java.awt.Color(240, 240, 240));
         jLabel2.setText("Tinjauan");
         tabDashboard.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 40, -1, -1));
-
-        jPanel4.setPreferredSize(new java.awt.Dimension(250, 250));
-        jPanel4.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-        tabDashboard.add(jPanel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 140, 370, 220));
 
         tabbedPanel.addTab("  Dashboard  ", tabDashboard);
 
@@ -743,13 +733,14 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         scrollPanelDTtambah.setBackground(new java.awt.Color(51, 51, 51));
         scrollPanelDTtambah.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         scrollPanelDTtambah.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPanelDTtambah.setPreferredSize(new java.awt.Dimension(610, 410));
+        scrollPanelDTtambah.setPreferredSize(new java.awt.Dimension(610, 340));
 
-        panelDT1.setBackground(new java.awt.Color(40, 40, 40));
-        panelDT1.setLayout(new java.awt.GridLayout(1, 0));
-        scrollPanelDTtambah.setViewportView(panelDT1);
+        panelDTtambah.setBackground(new java.awt.Color(40, 40, 40));
+        panelDTtambah.setPreferredSize(new java.awt.Dimension(610, 310));
+        panelDTtambah.setLayout(new java.awt.GridLayout(1, 0));
+        scrollPanelDTtambah.setViewportView(panelDTtambah);
 
-        panelTambahTransaksi.add(scrollPanelDTtambah, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, -1, 340));
+        panelTambahTransaksi.add(scrollPanelDTtambah, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, -1, -1));
 
         panelTableHeaderTambah.setBackground(new java.awt.Color(70, 70, 70));
         panelTableHeaderTambah.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -818,43 +809,39 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
 
         panelTambahTransaksi.add(panelTableHeaderTambah, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 175, 610, 50));
 
-        textHeaderAddTrx.setFont(new java.awt.Font("Bahnschrift", 0, 24)); // NOI18N
-        textHeaderAddTrx.setForeground(new java.awt.Color(255, 255, 255));
-        textHeaderAddTrx.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        textHeaderAddTrx.setText("Tambah Data Transaksi");
-        panelTambahTransaksi.add(textHeaderAddTrx, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 0, 610, 50));
-
-        jSeparator2.setBackground(new java.awt.Color(153, 153, 153));
-        jSeparator2.setForeground(new java.awt.Color(102, 102, 102));
-        panelTambahTransaksi.add(jSeparator2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 50, 590, -1));
-
-        textUangTunaiAdd.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
+        textUangTunaiAdd.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
         textUangTunaiAdd.setForeground(new java.awt.Color(255, 255, 150));
         textUangTunaiAdd.setText("Uang Tunai:");
-        panelTambahTransaksi.add(textUangTunaiAdd, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 80, -1, -1));
+        panelTambahTransaksi.add(textUangTunaiAdd, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 110, -1, 40));
 
         cb_namaPelanggan.setBackground(new java.awt.Color(97, 97, 97));
+        cb_namaPelanggan.setEditable(true);
         cb_namaPelanggan.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
         cb_namaPelanggan.setForeground(new java.awt.Color(255, 255, 255));
         cb_namaPelanggan.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
-        cb_namaPelanggan.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cb_namaPelangganActionPerformed(evt);
+        cb_namaPelanggan.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cb_namaPelangganItemStateChanged(evt);
             }
         });
-        panelTambahTransaksi.add(cb_namaPelanggan, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 110, 210, 40));
+        panelTambahTransaksi.add(cb_namaPelanggan, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 50, 290, 40));
 
-        textNamaPelangganAdd.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
+        textNamaPelangganAdd.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
         textNamaPelangganAdd.setForeground(new java.awt.Color(255, 255, 150));
         textNamaPelangganAdd.setText("Nama Pelanggan:");
-        panelTambahTransaksi.add(textNamaPelangganAdd, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 80, -1, -1));
+        panelTambahTransaksi.add(textNamaPelangganAdd, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 10, -1, 40));
 
-        btnTambahDataTrx.setBackground(new java.awt.Color(102, 255, 51));
-        btnTambahDataTrx.setFont(new java.awt.Font("Bebas", 1, 18)); // NOI18N
-        btnTambahDataTrx.setForeground(new java.awt.Color(30, 30, 30));
-        btnTambahDataTrx.setText("TAMBAH");
-        btnTambahDataTrx.setMargin(new java.awt.Insets(2, 2, 2, 2));
-        panelTambahTransaksi.add(btnTambahDataTrx, new org.netbeans.lib.awtextra.AbsoluteConstraints(508, 580, 110, 80));
+        buttonTambahDataTrx.setBackground(new java.awt.Color(84, 198, 47));
+        buttonTambahDataTrx.setFont(new java.awt.Font("Bebas", 1, 18)); // NOI18N
+        buttonTambahDataTrx.setForeground(new java.awt.Color(30, 30, 30));
+        buttonTambahDataTrx.setText("<html><center>TAMBAH<br>TRANSAKSI</center></html>");
+        buttonTambahDataTrx.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        buttonTambahDataTrx.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonTambahDataTrxActionPerformed(evt);
+            }
+        });
+        panelTambahTransaksi.add(buttonTambahDataTrx, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 580, 150, 80));
 
         tf_tanggal.setEditable(false);
         tf_tanggal.setBackground(new java.awt.Color(80, 80, 80));
@@ -865,59 +852,87 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         tf_tanggal.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         tf_tanggal.setDisabledTextColor(new java.awt.Color(200, 200, 200));
         tf_tanggal.setMargin(new java.awt.Insets(2, 14, 2, 14));
-        panelTambahTransaksi.add(tf_tanggal, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 610, 190, 50));
+        panelTambahTransaksi.add(tf_tanggal, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 610, 170, 50));
 
         jSeparator3.setBackground(new java.awt.Color(80, 80, 80));
         jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
-        panelTambahTransaksi.add(jSeparator3, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 580, 10, 80));
+        panelTambahTransaksi.add(jSeparator3, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 580, 10, 80));
 
         panelTotalTambah.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
         panelTotalTambah.setForeground(new java.awt.Color(255, 255, 255));
         panelTotalTambah.setText("Total:");
-        panelTambahTransaksi.add(panelTotalTambah, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 580, 250, 30));
+        panelTambahTransaksi.add(panelTotalTambah, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 570, 250, 40));
 
-        tf_total.setEditable(false);
-        tf_total.setBackground(new java.awt.Color(80, 80, 80));
-        tf_total.setFont(new java.awt.Font("Bahnschrift", 0, 24)); // NOI18N
-        tf_total.setForeground(new java.awt.Color(200, 200, 200));
-        tf_total.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        tf_total.setText("Rp.00,-");
-        tf_total.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        tf_total.setDisabledTextColor(new java.awt.Color(200, 200, 200));
-        panelTambahTransaksi.add(tf_total, new org.netbeans.lib.awtextra.AbsoluteConstraints(239, 610, 250, 50));
+        tf_totalBayar.setEditable(false);
+        tf_totalBayar.setBackground(new java.awt.Color(80, 80, 80));
+        tf_totalBayar.setFont(new java.awt.Font("Bahnschrift", 0, 24)); // NOI18N
+        tf_totalBayar.setForeground(new java.awt.Color(200, 200, 200));
+        tf_totalBayar.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        tf_totalBayar.setText("Rp. 0,-");
+        tf_totalBayar.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        tf_totalBayar.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        panelTambahTransaksi.add(tf_totalBayar, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 610, 250, 50));
 
         textTanggalTambah.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
         textTanggalTambah.setForeground(new java.awt.Color(255, 255, 255));
         textTanggalTambah.setText("Tanggal:");
-        panelTambahTransaksi.add(textTanggalTambah, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 580, 190, 30));
+        panelTambahTransaksi.add(textTanggalTambah, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 570, 170, 40));
 
         panelNoTrx.setBackground(new java.awt.Color(77, 77, 77));
+        panelNoTrx.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         panelNoTrx.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        textIDTrx.setFont(new java.awt.Font("Bebas", 0, 32)); // NOI18N
+        textIDTrx.setForeground(new java.awt.Color(255, 255, 255));
+        textIDTrx.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        textIDTrx.setText("NO");
+        panelNoTrx.add(textIDTrx, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 120, 110));
+
+        panelTambahTransaksi.add(panelNoTrx, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 40, 120, 110));
+
+        tf_uangTunai.setBackground(new java.awt.Color(80, 80, 80));
+        tf_uangTunai.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
+        tf_uangTunai.setForeground(new java.awt.Color(255, 255, 255));
+        tf_uangTunai.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        tf_uangTunai.setText("0");
+        tf_uangTunai.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
+        tf_uangTunai.setCaretColor(new java.awt.Color(255, 255, 150));
+        tf_uangTunai.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        tf_uangTunai.setInputVerifier(ivUang);
+        panelTambahTransaksi.add(tf_uangTunai, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 110, 190, 40));
 
         textNoTransaksiAdd.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
         textNoTransaksiAdd.setForeground(new java.awt.Color(255, 255, 255));
         textNoTransaksiAdd.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         textNoTransaksiAdd.setText("No Transaksi");
-        panelNoTrx.add(textNoTransaksiAdd, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 120, 30));
+        panelTambahTransaksi.add(textNoTransaksiAdd, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 10, 120, 30));
 
-        textIDTrx.setFont(new java.awt.Font("Bebas", 0, 18)); // NOI18N
-        textIDTrx.setForeground(new java.awt.Color(255, 255, 255));
-        textIDTrx.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        textIDTrx.setText("NO");
-        panelNoTrx.add(textIDTrx, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 100, 60));
+        buttonReset.setBackground(new java.awt.Color(104, 55, 55));
+        buttonReset.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
+        buttonReset.setForeground(new java.awt.Color(255, 255, 255));
+        buttonReset.setText("Hapus Semua");
+        buttonReset.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonResetActionPerformed(evt);
+            }
+        });
+        panelTambahTransaksi.add(buttonReset, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 50, 150, 40));
 
-        panelTambahTransaksi.add(panelNoTrx, new org.netbeans.lib.awtextra.AbsoluteConstraints(490, 65, 120, 100));
-
-        jTextField1.setBackground(new java.awt.Color(80, 80, 80));
-        jTextField1.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
-        jTextField1.setForeground(new java.awt.Color(255, 255, 255));
-        jTextField1.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        jTextField1.setText("0");
-        jTextField1.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
-        jTextField1.setCaretColor(new java.awt.Color(255, 255, 150));
-        jTextField1.setDisabledTextColor(new java.awt.Color(200, 200, 200));
-        jTextField1.setInputVerifier(ivUang);
-        panelTambahTransaksi.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 110, 210, 40));
+        buttonAddItem.setBackground(new java.awt.Color(80, 80, 80));
+        buttonAddItem.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
+        buttonAddItem.setForeground(new java.awt.Color(255, 255, 255));
+        buttonAddItem.setText("Tambah Item");
+        buttonAddItem.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                buttonAddItemMouseExited(evt);
+            }
+        });
+        buttonAddItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonAddItemActionPerformed(evt);
+            }
+        });
+        panelTambahTransaksi.add(buttonAddItem, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 110, 150, 40));
 
         tabTransaksi.add(panelTambahTransaksi, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 0, -1, -1));
 
@@ -1396,7 +1411,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                 break;
             case 2:
                 title = "K-SIR Book: Data Transaksi";
-                setCBpelanggan();
+
                 break;
             case 3:
                 title = "K-SIR Book: Data Pelanggan";
@@ -1408,6 +1423,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             @Override
             public void run() {
                 setTitle(title);
+                setCBpelanggan();
                 textTitleBar.setText(title);
             }
         };
@@ -1437,7 +1453,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     }//GEN-LAST:event_buttonTambahPelangganActionPerformed
 
     private void buttonTambahkanPelangganActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonTambahkanPelangganActionPerformed
-        if (inputNama && inputAlamat && inputTelp) {
+        if (inputNamaP && inputAlamatP && inputTelpP) {
             Thread t = new Thread("thread-tambahDataPelanggan") {
                 @Override
                 public void run() {
@@ -1459,11 +1475,160 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_buttonTambahkanPelangganActionPerformed
 
-    private void cb_namaPelangganActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cb_namaPelangganActionPerformed
-        if (cb_namaPelanggan.getSelectedIndex() == totalPelanggan) {
-            tabbedPanel.setSelectedIndex(3);
+    private int indexDetailTrx = 0;
+
+    private void buttonAddItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonAddItemActionPerformed
+        if (panelTambahTransaksi.isVisible()) {
+            panelDTtambah.removeAll();
+            indexDetailTrx += 1;
+            DetailTransaksi detailTransaksi = new DetailTransaksi();
+            detailTransaksi.setId_detail_trx(indexDetailTrx);
+            detailTransaksi.setId_trx(listTransaksi.size() + 1);
+            detailTrx.listDetailTransaksis.add(detailTransaksi);
+            loadDataDetailTransaksi();
         }
-    }//GEN-LAST:event_cb_namaPelangganActionPerformed
+    }//GEN-LAST:event_buttonAddItemActionPerformed
+
+    private void buttonResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonResetActionPerformed
+        detailTrx.listDetailTransaksis.clear();
+        indexDetailTrx = 0;
+        loadDataDetailTransaksi();
+        JTextField textField = (JTextField) cb_namaPelanggan.getEditor().getEditorComponent();
+        textField.setText("");
+        tf_uangTunai.setText("0");
+    }//GEN-LAST:event_buttonResetActionPerformed
+
+    private void buttonTambahDataTrxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonTambahDataTrxActionPerformed
+        CustomJPanelView jOpt = new CustomJPanelView();
+        jOpt.setPanel("black");
+        if (indexDetailTrx > 0) { // cek apakah daftar barang yang ingin dibeli sudah diisi apa belum
+            if (inputUangT) { // cek apakah uang sudah diisi apa masih kosong
+                int uangTunai = Integer.parseInt(tf_uangTunai.getText());
+                String[] t = tf_totalBayar.getText().split(" ");
+                t = t[1].split(",");
+                String t1 = t[0].replace(".", "");
+                int total = Integer.parseInt(t1);
+                if (uangTunai >= total) { // cek uang tunai yang dibayarkan sudah cukup belum
+                    if (inputNamaT) { // cek nama pelanggan sudah diisi belum
+                        Transaksi trx = new Transaksi();
+                        trx.setId(Integer.parseInt(textIDTrx.getText()));
+                        JTextField textField = (JTextField) cb_namaPelanggan.getEditor().getEditorComponent();
+                        listPelanggans.forEach((Pelanggan p) -> {
+                            if (p.getNama_pelanggan().equalsIgnoreCase(textField.getText())) {
+                                trx.setIdPelanggan(p.getId_pelanggan());
+                                trx.setNamaPelanggan(textField.getText());
+                            }
+                        });
+                        // cek nama pelanggan terdapat di daftar pelanggan
+                        if (trx.getIdPelanggan() > 0) {
+                            trx.setIdPetugas(PREFS.getId());
+                            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                            Date now = new Date();
+                            trx.setTanggal(formatter.format(now));
+                            trx.setNominalBayar(Double.valueOf(uangTunai));
+                            try { // Memasukkan data transaksi ke list dan database
+                                listDetailTransaksis = detailTrx.listDetailTransaksis;
+                                Boolean isKosong = false;
+                                for (int i = 0; i < listDetailTransaksis.size(); i++) {
+                                    if (listDetailTransaksis.get(i).getHarga() == 0 || listDetailTransaksis.get(i).getIsbn().equals("")) {
+                                        isKosong = true;
+                                        break;
+                                    }
+                                }
+                                if (!isKosong) {
+                                    transaksi.insert(trx);
+                                    int maxLoop = (listDetailTransaksis.size() != indexDetailTrx) ? listDetailTransaksis.size() : indexDetailTrx;
+                                    for (int i = 0; i < maxLoop; i++) {
+                                        DetailTransaksi dtrx = new DetailTransaksi();
+                                        dtrx.setId_trx(trx.getId());
+                                        dtrx.setIsbn(listDetailTransaksis.get(i).getIsbn());
+                                        dtrx.setBanyak(listDetailTransaksis.get(i).getBanyak());
+                                        try { // Memasukkan data detail transaksi ke list dan database
+                                            detailTrx.insert(dtrx);
+                                        } catch (SQLException ex) {
+                                            System.out.println(i + ". Error: " + ex.getMessage());
+                                        }
+                                    }
+                                    jOpt.displayInfo(panelTambahTransaksi, "Berhasil menambahkan transaksi!", "Sukses!");
+                                    trx.setNamaPetugas(PREFS.getName());
+                                    trx.setTotalBayar(total);
+                                    buttonResetActionPerformed(evt);
+                                    setInfoTambahTrx();
+                                    loadDataTransaksi();
+                                } else {
+                                    jOpt.displayError(panelTambahTransaksi, "Terdapat daftar item yang masih kosong,\nSilahkan isi atau hapus item dari daftar!", "Item belum lengkap!");
+                                }
+                            } catch (SQLException ex) {
+                                System.out.println("Error: " + ex.getMessage());
+                            }
+                        } else {
+                            int aksi = jOpt.displayConfirmDialog(panelTambahTransaksi, "Nama Pelanggan belum terdaftar pada daftar,\ntambahkan sekarang?", "Nama Pelanggan belum terdaftar!");
+                            switch (aksi) {
+                                case 0: {
+                                    tabbedPanel.setSelectedIndex(3);
+                                    buttonTambahPelangganActionPerformed(evt);
+                                    tf_newNamaPelanggan.requestFocusInWindow();
+                                    tf_newNamaPelanggan.setText(((JTextField) cb_namaPelanggan.getEditor().getEditorComponent()).getText());
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        jOpt.displayError(panelTambahTransaksi, "Nama Pelanggan belum dipilih,\nsilahkan pilih nama pelanggan terlebih dahulu!", "Pelanggan belum diisi!");
+                        setCBpelanggan();
+                        cb_namaPelanggan.requestFocusInWindow();
+                    }
+                } else {
+                    jOpt.displayError(panelTambahTransaksi, "Nominal uang yang dibayarkan kurang,\nsilahkan cek kembali!", "Nominal uang kurang!");
+                }
+            } else {
+                jOpt.displayError(panelTambahTransaksi, "Nominal uang masih kosong,\nsilahkan isikan terlebih dahulu", "Nominal uang kosong!");
+                tf_uangTunai.requestFocusInWindow();
+            }
+        } else {
+            jOpt.displayError(panelTambahTransaksi, "Anda belum menambahkan daftar buku yang ingin dibeli\nSilahkan tambahkan terlebih dahulu!", "Daftar Buku kosong!");
+            buttonAddItem.requestFocusInWindow();
+        }
+    }//GEN-LAST:event_buttonTambahDataTrxActionPerformed
+
+    private void cb_namaPelangganItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cb_namaPelangganItemStateChanged
+        inputNamaT = true;
+    }//GEN-LAST:event_cb_namaPelangganItemStateChanged
+
+    private void buttonAddItemMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_buttonAddItemMouseExited
+        SwingUtilities.updateComponentTreeUI(panelTambahTransaksi);
+    }//GEN-LAST:event_buttonAddItemMouseExited
+
+    private void loadDataDetailTransaksi() {
+        listDetailTransaksis = detailTrx.listDetailTransaksis;
+        setListDetailTransaksiPanel();
+    }
+
+    private void setListDetailTransaksiPanel() {
+        scrollPanelDTtambah.setVisible(false);
+        panelDTtambah.removeAll();
+        int rows = listDetailTransaksis.size();
+        int height = (rows * 50);
+        panelDTtambah.setLayout(new GridLayout(rows, 1, 0, 0));
+        if (rows < 7) {
+            if (rows == 0) {
+                scrollPanelDTtambah.setPreferredSize(new Dimension(610, 340));
+            } else {
+                scrollPanelDTtambah.setPreferredSize(new Dimension(610, height + 5));
+            }
+        } else {
+            scrollPanelDTtambah.setPreferredSize(new Dimension(610, 340));
+        }
+        panelDTtambah.setPreferredSize(new Dimension(610, height));
+        int i = 0;
+        for (DetailTransaksi list : listDetailTransaksis) {
+            i++;
+            AddDetailTransaksiView newPanel = new AddDetailTransaksiView(listBuku, detailTrx, i);
+            newPanel.apply(panelDTtambah, tf_totalBayar);
+        }
+        SwingUtilities.updateComponentTreeUI(panelTambahTransaksi);
+        scrollPanelDTtambah.setVisible(true);
+    }
 
     /**
      * @param args the command line arguments
@@ -1491,7 +1656,6 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
             new DashboardPegawaiView().setVisible(true);
-
         });
     }
     // Get Current Time and Update on Interface every 1 seconds
@@ -1518,7 +1682,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
      * Mengubah tanggal dan juga nomor transaksi pada panel tambah transaksi
      */
     private synchronized void setInfoTambahTrx() {
-        textIDTrx.setText(String.valueOf(listTransaksi.size() + 1));
+        textIDTrx.setText(String.valueOf(listTransaksi.get(listTransaksi.size() - 1).getId() + 1));
         tf_tanggal.setText(String.valueOf(tanggal.tanggal(new Date())));
     }
 
@@ -1547,24 +1711,73 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         tf_newNoTelp.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
     }
 
+    private final List<String> arrayPelanggans = new ArrayList<>();
+
     /**
      * Mengatur item pilihan pada combo box pelanggan
      */
-    private synchronized void setCBpelanggan() {
+    private void setCBpelanggan() {
+        inputNamaT = false;
+        arrayPelanggans.clear();
         cb_namaPelanggan.removeAllItems();
         listPelanggans.forEach((p) -> {
+            arrayPelanggans.add(p.getNama_pelanggan());
             cb_namaPelanggan.addItem(p.getNama_pelanggan());
         });
-        cb_namaPelanggan.setSelectedIndex(0);
-        cb_namaPelanggan.addItem("[+] Tambah...");
+        cb_namaPelanggan.setSelectedIndex(-1);
+
+        JTextField textField = (JTextField) cb_namaPelanggan.getEditor().getEditorComponent();
+        textField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                SwingUtilities.invokeLater(() -> {
+                    filterNamaPelanggan(textField.getText());
+                });
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER && cb_namaPelanggan.getItemCount() > 0) {
+                    inputNamaT = true;
+                    textField.setText(cb_namaPelanggan.getItemAt(0));
+                    cb_namaPelanggan.setPopupVisible(false);
+                }
+            }
+        });
+    }
+
+    private synchronized void filterNamaPelanggan(String keyword) {
+        if (!cb_namaPelanggan.isPopupVisible()) {
+            cb_namaPelanggan.showPopup();
+        }
+
+        List<String> filterArray = new ArrayList<>();
+
+        for (int i = 0; i < arrayPelanggans.size(); i++) {
+            if (arrayPelanggans.get(i).toLowerCase().contains(keyword.toLowerCase())) {
+                filterArray.add(arrayPelanggans.get(i));
+            }
+        }
+
+        if (filterArray.size() > 0) {
+            DefaultComboBoxModel model = (DefaultComboBoxModel) cb_namaPelanggan.getModel();
+            model.removeAllElements();
+            filterArray.forEach((s) -> {
+                model.addElement(s);
+            });
+            JTextField textField = (JTextField) cb_namaPelanggan.getEditor().getEditorComponent();
+            textField.setText(keyword);
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel backgroundPanel;
     private javax.swing.JPanel basePanel;
-    private javax.swing.JButton btnTambahDataTrx;
+    private javax.swing.JButton buttonAddItem;
     private javax.swing.JButton buttonAddTransaksi;
     private javax.swing.JButton buttonPencarian;
+    private javax.swing.JButton buttonReset;
+    private javax.swing.JButton buttonTambahDataTrx;
     private javax.swing.JButton buttonTambahPelanggan;
     private javax.swing.JButton buttonTambahkanPelanggan;
     private javax.swing.JComboBox<String> cb_namaPelanggan;
@@ -1572,7 +1785,6 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private javax.swing.JLabel curTime;
     private javax.swing.JPanel dragPanel;
     private javax.swing.JTextField fieldPencarian;
-    private javax.swing.JFrame frameTambahTransaksi;
     private javax.swing.JTextField headAlamat;
     private javax.swing.JTextField headEdit;
     private javax.swing.JTextField headHapus;
@@ -1581,11 +1793,8 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private javax.swing.JTextField headNomor;
     private javax.swing.JPanel headerDaftarBuku;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JPanel jPanel4;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
-    private javax.swing.JTextField jTextField1;
     private javax.swing.JPanel leftPanel;
     private javax.swing.JLabel listBukuText;
     private javax.swing.JLabel listBukuText1;
@@ -1594,7 +1803,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private javax.swing.JLabel namaKasirText;
     private javax.swing.JLabel noTeleponText;
     private javax.swing.JPanel panelDT;
-    private javax.swing.JPanel panelDT1;
+    private javax.swing.JPanel panelDTtambah;
     private javax.swing.JPanel panelDetailTransaksi;
     private javax.swing.JPanel panelHeadHarga;
     private javax.swing.JPanel panelHeadHarga1;
@@ -1638,7 +1847,6 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private javax.swing.JLabel textBayarDT;
     private javax.swing.JLabel textHarga;
     private javax.swing.JLabel textHarga1;
-    private javax.swing.JLabel textHeaderAddTrx;
     private javax.swing.JLabel textIDTrx;
     private javax.swing.JLabel textInputAlamat;
     private javax.swing.JLabel textInputNama;
@@ -1668,7 +1876,8 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private javax.swing.JTextField tf_newNamaPelanggan;
     private javax.swing.JTextField tf_newNoTelp;
     private javax.swing.JTextField tf_tanggal;
-    private javax.swing.JTextField tf_total;
+    private javax.swing.JTextField tf_totalBayar;
+    private javax.swing.JTextField tf_uangTunai;
     private javax.swing.JLabel titleText;
     private javax.swing.JButton ubahProfilButton;
     private javax.swing.JLabel versionText;

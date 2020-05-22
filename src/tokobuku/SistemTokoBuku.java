@@ -21,13 +21,15 @@ import tokobuku.view.LoginView;
 
 /**
  *
- * @author Muhammad Rosyid Izzulkhaq (5180411122) Taufik Ismail (5180411074)
- * Didik Nowo Hariyanto Widodo (5180411081) Risma Nur Oktaviani B. (5180411006)
- * Atika Inayatu Alfiyah (5180411028)
+ * @author Muhammad Rosyid Izzulkhaq (5180411122)
+ * @author Taufik Ismail (5180411074)
+ * @author Didik Nowo Hariyanto Widodo (5180411081)
+ * @author Risma Nur Oktaviani B. (5180411006)
+ * @author Atika Inayatu Alfiyah (5180411028)
  * @version 1.0
  */
 public class SistemTokoBuku {
-    
+
     final static PreferencedHelper PREFS = new PreferencedHelper();
 
     /**

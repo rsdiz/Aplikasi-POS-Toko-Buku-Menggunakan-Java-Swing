@@ -1,20 +1,18 @@
 package tokobuku.model;
 
-import java.util.Date;
-
 /**
  * Model untuk Data Transaksi
  * @author Rosyid Iz
  */
 public class Transaksi {
-    private int id;
-    private int idPelanggan;
-    private String namaPelanggan;
-    private int idPetugas;
-    private String namaPetugas;
-    private Date tanggal;
-    private Double nominalBayar;
-    private int totalBayar;
+    private int id = 0;
+    private int idPelanggan = 0;
+    private String namaPelanggan = "";
+    private int idPetugas = 0;
+    private String namaPetugas = "";
+    private String tanggal;
+    private Double nominalBayar = 0D;
+    private int totalBayar = 0;
     
     /**
      * Mengembalikan Nama Pelanggan
@@ -52,7 +50,7 @@ public class Transaksi {
      * Mengembalikan Tanggal terjadinya transaksi
      * @return a <code>Date</code>
      */
-    public Date getTanggal() {
+    public String getTanggal() {
         return tanggal;
     }
 
@@ -60,7 +58,7 @@ public class Transaksi {
      * Mengubah tanggal terjadinya transaksi
      * @param tanggal 
      */
-    public void setTanggal(Date tanggal) {
+    public void setTanggal(String tanggal) {
         this.tanggal = tanggal;
     }
 

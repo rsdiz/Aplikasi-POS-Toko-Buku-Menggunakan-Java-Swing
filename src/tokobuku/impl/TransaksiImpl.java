@@ -27,7 +27,7 @@ public class TransaksiImpl implements TransaksiInterface{
             ps.setInt(1, transaksi.getId());
             ps.setInt(2, transaksi.getIdPelanggan());
             ps.setInt(3, transaksi.getIdPetugas());
-            ps.setString(4, transaksi.getTanggal().toString());
+            ps.setString(4, transaksi.getTanggal());
             ps.setInt(5, transaksi.getNominalBayar().intValue());
             ps.executeUpdate();
             listTransaksis.add(transaksi);
@@ -41,7 +41,7 @@ public class TransaksiImpl implements TransaksiInterface{
             ps.setInt(1, transaksi.getId());
             ps.setInt(2, transaksi.getIdPelanggan());
             ps.setInt(3, transaksi.getIdPetugas());
-            ps.setString(4, transaksi.getTanggal().toString());
+            ps.setString(4, transaksi.getTanggal());
             ps.setInt(5, transaksi.getNominalBayar().intValue());
             ps.executeUpdate();
             listTransaksis.set(transaksi.getId()-1, transaksi);
@@ -78,7 +78,7 @@ public class TransaksiImpl implements TransaksiInterface{
         transaksi.setIdPetugas(res.getInt("id_kasir"));
         transaksi.setNamaPelanggan(res.getString("nama_pelanggan"));
         transaksi.setNamaPetugas(res.getString("nama_petugas"));
-        transaksi.setTanggal(res.getDate("tanggal"));
+        transaksi.setTanggal(res.getString("tanggal"));
         transaksi.setNominalBayar(Double.valueOf(res.getInt("bayar")));
         transaksi.setTotalBayar(res.getInt("totalbayar"));
     }

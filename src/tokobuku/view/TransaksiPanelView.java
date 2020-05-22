@@ -6,6 +6,8 @@ import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -67,7 +69,7 @@ public class TransaksiPanelView {
         this.doubleF = new Formatter<>();
         this.dateF = new Formatter<>();
         this.detailTrx = new DetailTransaksiImpl();
-        this.listDetailTrx = new ArrayList<>();
+        this.listDetailTrx = detailTrx.listDetailTransaksis;
         panelListTransaksi = new JPanel();
         panelListTransaksi.setBackground(new Color(60, 60, 60));
         panelListTransaksi.setPreferredSize(new Dimension(407, 100));
@@ -111,30 +113,26 @@ public class TransaksiPanelView {
             @Override
             public void mouseClicked(MouseEvent e) {
                 Runnable runnable = () -> {
-                    try {
-                        panelDT.removeAll();
-                        listDetailTrx = detailTrx.load(transaksi.getId());
-                        if (buttonAddTransaksi.getText().equalsIgnoreCase("batal")) {
-                            buttonAddTransaksi.setText("Tambah Transaksi");
-                        }
-                        if (panelDetailTransaksi.isVisible()) {
-                            if (txtNoTrx.getText().equals("No Transaksi: " + transaksi.getId())) {
-                                panelTambahTransaksi.setVisible(false);
-                                panelDetailTransaksi.setVisible(false);
-                                panelInfo.setVisible(true);
-                            } else {
-                                setDetail();
-                                setListDetail();
-                            }
+                    panelDT.removeAll();
+                    listDetailTrx = detailTrx.listDetailTransaksis;
+                    if (buttonAddTransaksi.getText().equalsIgnoreCase("batal")) {
+                        buttonAddTransaksi.setText("Tambah Transaksi");
+                    }
+                    if (panelDetailTransaksi.isVisible()) {
+                        if (txtNoTrx.getText().equals("No Transaksi: " + transaksi.getId())) {
+                            panelTambahTransaksi.setVisible(false);
+                            panelDetailTransaksi.setVisible(false);
+                            panelInfo.setVisible(true);
                         } else {
                             setDetail();
                             setListDetail();
-                            panelTambahTransaksi.setVisible(false);
-                            panelInfo.setVisible(false);
-                            panelDetailTransaksi.setVisible(true);
                         }
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TransaksiPanelView.class.getName()).log(Level.SEVERE, null, ex);
+                    } else {
+                        setDetail();
+                        setListDetail();
+                        panelTambahTransaksi.setVisible(false);
+                        panelInfo.setVisible(false);
+                        panelDetailTransaksi.setVisible(true);
                     }
                 };
                 runnable.run();
@@ -149,15 +147,30 @@ public class TransaksiPanelView {
     public void setTransaksi(Transaksi transaksi) {
         this.transaksi = transaksi;
         setProperty();
+        syncDataDetailTransaksi();
     }
 
     private void setProperty() {
         // set Number
         number.setText(String.valueOf(index));
         // set Tanggal
-        tanggal.setText(transaksi.getTanggal().toString());
+        tanggal.setText(transaksi.getTanggal());
         // set Nama Pembeli
         namaPembeli.setText(transaksi.getNamaPelanggan());
+    }
+    
+    private void syncDataDetailTransaksi() {
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    listDetailTrx = detailTrx.load(transaksi.getId());
+                } catch (SQLException ex) {
+                    Logger.getLogger(TransaksiPanelView.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+        t.start();
     }
 
     public void initJLabel(
@@ -197,11 +210,11 @@ public class TransaksiPanelView {
         txtNama_pelanggan.setText("Pelanggan: " + transaksi.getNamaPelanggan());
         txtNama_kasir.setText("Kasir: " + transaksi.getNamaPetugas());
         txtUang_tunai.setText("Uang Tunai: " + doubleF.rupiah(transaksi.getNominalBayar()) + ",-");
-        txtTanggal.setText("Tanggal: " + dateF.tanggal(transaksi.getTanggal()));
+        txtTanggal.setText("Tanggal: " + transaksi.getTanggal());
         txtTotal.setText(intF.rupiah(transaksi.getTotalBayar()) + ",-");
     }
 
-    private void setListDetail() {
+    private synchronized void setListDetail() {
         int rows = listDetailTrx.size();
         int height = 50 * rows;
         panelDT.setLayout(new GridLayout(rows, 1, 0, 0));

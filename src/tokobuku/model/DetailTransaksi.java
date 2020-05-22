@@ -17,6 +17,15 @@ public class DetailTransaksi {
     private int banyak;
     private int harga;
 
+    public DetailTransaksi() {
+        this.id_detail_trx = 0;
+        this.id_trx = 0;
+        this.isbn = "";
+        this.judul_buku = "";
+        this.banyak = 0;
+        this.harga = 0;
+    }
+
     /**
      * Mengembalikan id detail transaksi
      * @return a <code>int</code>

@@ -26,12 +26,11 @@ public class DetailTransaksiImpl implements DetailTransaksiInterface{
 
     @Override
     public void insert(DetailTransaksi detailtrx) throws SQLException {
-        String sql = "CALL insert_detailtrx(?,?,?,?)";
+        String sql = "CALL insert_detailtrx(?,?,?)";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, detailtrx.getId_detail_trx());
-            ps.setInt(2, detailtrx.getId_trx());
-            ps.setString(3, detailtrx.getIsbn());
-            ps.setInt(4, detailtrx.getBanyak());
+            ps.setInt(1, detailtrx.getId_trx());
+            ps.setString(2, detailtrx.getIsbn());
+            ps.setInt(3, detailtrx.getBanyak());
             ps.executeUpdate();
             listDetailTransaksis.add(detailtrx);
         }

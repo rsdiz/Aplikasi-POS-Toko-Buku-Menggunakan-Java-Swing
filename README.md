@@ -16,4 +16,4 @@ _(in progress)_
 
 ## Screenshot:
 
-  Open [SCREENSHOT.MD](SCREENSHOT.MD)
+  Open [SCREENSHOT.md](SCREENSHOT.md)

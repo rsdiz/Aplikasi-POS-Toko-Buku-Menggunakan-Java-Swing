@@ -66,6 +66,9 @@ public class AddDetailTransaksiView {
 
     private Buku buku = null;
 
+    /**
+     * Verifikasi apakah inputan merupakan angka atau bukan
+     */
     private final InputVerifier ivDigit = new InputVerifier() {
         @Override
         public boolean verify(JComponent input) {
@@ -161,7 +164,7 @@ public class AddDetailTransaksiView {
         tf_isbn.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                new Dialog(listBukus).display();
+                new Dialog(listBukus).display(); // Menampilkan dialog untuk memilih buku
             }
 
             @Override
@@ -169,6 +172,7 @@ public class AddDetailTransaksiView {
                 if (!tf_isbn.getText().equals("") && buku != null) {
                     tf_harga.setText(String.valueOf(buku.getHarga_jual()));
                     try {
+                        //mengubah harga pada list<DetailTransaksi> sesuai dengan buku yang dipilih
                         inpDetailImpl.listDetailTransaksis.get(index - 1).setHarga((int) buku.getHarga_jual());
                     } catch (IndexOutOfBoundsException ex) {
 
@@ -179,21 +183,25 @@ public class AddDetailTransaksiView {
         tf_noDetail.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
+                // Membuat tampilan panel menjadi warna merah
                 tf_noDetail.setBackground(new java.awt.Color(255, 60, 60));
                 tf_noDetail.setText("-");
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
+                // Mengembalikan tampilan seperti biasa
                 tf_noDetail.setBackground(COLOR35);
                 tf_noDetail.setText(String.valueOf(index));
             }
 
             @Override
             public void mouseClicked(MouseEvent e) {
+                // Menampilkan dialog peringatan apakah ingin menghapus atau tidak
                 deleteItem();
             }
         });
+        
         tf_qty.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -233,6 +241,10 @@ public class AddDetailTransaksiView {
         this.tf_totalBayar = tf_totalBayar;
     }
 
+    /**
+     * Menampilkan dialog peringatan apakah ingin menghapus kolom tersebut
+     * dan juga kode untuk menghapus baris
+     */
     private void deleteItem() {
         CustomJPanelView jOpt = new CustomJPanelView();
         jOpt.setPanel("black");
@@ -256,6 +268,9 @@ public class AddDetailTransaksiView {
         }
     }
 
+    /**
+     * Class dialog untuk menampilkan panel daftar buku
+     */
     class Dialog {
 
         private final JDialog dialog;

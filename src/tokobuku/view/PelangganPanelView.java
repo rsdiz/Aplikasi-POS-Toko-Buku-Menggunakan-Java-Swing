@@ -5,7 +5,6 @@ import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -226,8 +225,11 @@ public class PelangganPanelView{
         columnEdit.setPreferredSize(new java.awt.Dimension(130, 35));
         addComponent(130);
         columnNama.setEditable(true);
+        columnNama.setBorder(javax.swing.BorderFactory.createEtchedBorder(0));
         columnAlamat.setEditable(true);
+        columnAlamat.setBorder(javax.swing.BorderFactory.createEtchedBorder(0));
         columnNoTelp.setEditable(true);
+        columnNoTelp.setBorder(javax.swing.BorderFactory.createEtchedBorder(0));
     }
 
     private void disableEdit() {
@@ -267,8 +269,11 @@ public class PelangganPanelView{
         columnEdit.setPreferredSize(new java.awt.Dimension(60, 35));
         addComponent(60);
         columnNama.setEditable(false);
+        columnNama.setBorder(javax.swing.BorderFactory.createEtchedBorder(1));
         columnAlamat.setEditable(false);
+        columnAlamat.setBorder(javax.swing.BorderFactory.createEtchedBorder(1));
         columnNoTelp.setEditable(false);
+        columnNoTelp.setBorder(javax.swing.BorderFactory.createEtchedBorder(1));
     }
 
     private void deletePelanggan() {

@@ -83,6 +83,13 @@ SELECT * FROM data_buku;
 
 ---
 
+**Screenshot Hasil Implementasi:**
+
+<p align="center"><img src="screenshots/SS 2020-05-29 125810 - Hasil Implementasi Buku.jpg" alt="Hasil Implementasi Buku">
+<br><i>Gambar Tampilan Daftar Buku</i></p>
+
+---
+
 ### View ***data_transaksi()***
 
 **Query:** 
@@ -131,6 +138,13 @@ public List<Transaksi> load() throws SQLException {
 }
 ```
 [💾 Download Gambar](https://github.com/rsdiz/Sistem-Kasir-menggunakan-Java-Swing/raw/master/screenshots/implement%20view%20data_transaksi%20in%20code.png)
+
+---
+
+**Screenshot Hasil Implementasi:**
+
+<p align="center"><img src="screenshots/SS 2020-05-29 125706 - Hasil Implementasi Transaksi.jpg" alt="Hasil Implementasi Transaksi">
+<br><i>Gambar Tampilan Daftar Transaksi</i></p>
 
 ---
 
@@ -186,3 +200,10 @@ public List<DetailTransaksi> load(int select_id) throws SQLException {
 }
 ```
 [💾 Download Gambar](https://github.com/rsdiz/Sistem-Kasir-menggunakan-Java-Swing/raw/master/screenshots/implement%20view%20data_detail_trx%20in%20code.png)
+
+---
+
+**Screenshot Hasil Implementasi:**
+
+<p align="center"><img src="screenshots/SS 2020-05-29 125857 - Hasil Implementasi Detail Trx.jpg" alt="Hasil Implementasi Detail Transaksi">
+<br><i>Gambar Tampilan Detail Transaksi</i></p>

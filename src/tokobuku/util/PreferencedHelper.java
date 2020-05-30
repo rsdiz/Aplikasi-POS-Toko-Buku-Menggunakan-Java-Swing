@@ -8,67 +8,76 @@ import java.util.prefs.Preferences;
  * @author Rosyid Iz
  */
 public class PreferencedHelper {
-    Preferences prefs = Preferences.userNodeForPackage(tokobuku.SistemTokoBuku.class);
-    final String ID_USER = "id_user";
-    final String UNAME = "username";
-    final String NAME = "nama";
-    final String TELP = "telepon";
-    final String ADDRESS = "alamat";
-    final String isLogin = "isLogin";
+    static Preferences prefs = Preferences.userNodeForPackage(tokobuku.SistemTokoBuku.class);
+    static final String ID_USER = "id_user";
+    static final String UNAME = "username";
+    static final String NAME = "nama";
+    static final String TELP = "telepon";
+    static final String ADDRESS = "alamat";
+    static final String IS_LOGIN = "isLogin";
+    static final String AKSES = "akses";
 
     public PreferencedHelper() {
         prefs.node("Pegawai");
     }
     
-    public void clear() throws BackingStoreException{
+    public static String getAkses() {
+        return prefs.get(AKSES, "");
+    }
+    
+    public static void setAkses(String akses) {
+        prefs.put(AKSES, akses);
+    }
+    
+    public static void clear() throws BackingStoreException{
         prefs.clear();
     }
     
-    public boolean getLogin(){
-        return prefs.getBoolean(isLogin, false);
+    public static boolean getLogin(){
+        return prefs.getBoolean(IS_LOGIN, false);
     }
     
-    public void setLogin(boolean status){
-        prefs.putBoolean(isLogin, status);
+    public static void setLogin(boolean status){
+        prefs.putBoolean(IS_LOGIN, status);
     }
     
-    public int getId(){
+    public static int getId(){
         return prefs.getInt(ID_USER, -1);
     }
     
-    public void setId(int id){
+    public static void setId(int id){
         prefs.putInt(ID_USER, id);
     }
     
-    public String getUname(){
+    public static String getUname(){
         return prefs.get(UNAME, "");
     }
     
-    public void setUname(String uname){
+    public static void setUname(String uname){
         prefs.put(UNAME, uname);
     }
     
-    public String getName(){
+    public static String getName(){
         return prefs.get(NAME, "");
     }
     
-    public void setName(String name){
+    public static void setName(String name){
         prefs.put(NAME, name);
     }
     
-    public String getTel(){
+    public static String getTel(){
         return prefs.get(TELP, "");
     }
     
-    public void setTel(String tel){
+    public static void setTel(String tel){
         prefs.put(TELP, tel);
     }
     
-    public String getAddress(){
+    public static String getAddress(){
         return prefs.get(ADDRESS, "");
     }
     
-    public void setAddress(String address){
+    public static void setAddress(String address){
         prefs.put(ADDRESS, address);
     }
     

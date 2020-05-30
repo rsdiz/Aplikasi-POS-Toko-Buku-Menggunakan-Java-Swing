@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import tokobuku.interf.LoginInterface;
-import tokobuku.model.Pegawai;
 import tokobuku.util.ConnectionUtil;
 import tokobuku.util.PasswordUtils;
 import tokobuku.util.PreferencedHelper;
@@ -15,8 +14,6 @@ import tokobuku.util.PreferencedHelper;
  * @author Rosyid Iz
  */
 public class LoginImpl implements LoginInterface {
-
-    private final static PreferencedHelper PREFS = new PreferencedHelper();
 
     @Override
     public String doLogin(String username, String password) throws SQLException {
@@ -35,7 +32,8 @@ public class LoginImpl implements LoginInterface {
                             res.getString("nama"),
                             res.getString("alamat"),
                             res.getString("telepon"),
-                            res.getString("username"));
+                            res.getString("username"),
+                            res.getString("akses"));
                 } else {
                     result = "406";
                 }
@@ -51,14 +49,15 @@ public class LoginImpl implements LoginInterface {
             String nama,
             String alamat,
             String telepon,
-            String username
+            String username,
+            String akses
     ) throws SQLException {
-        PREFS.setLogin(true);
-        PREFS.setId(id);
-        PREFS.setName(nama);
-        PREFS.setAddress(alamat);
-        PREFS.setTel(telepon);
-        PREFS.setUname(username);
+        PreferencedHelper.setLogin(true);
+        PreferencedHelper.setId(id);
+        PreferencedHelper.setName(nama);
+        PreferencedHelper.setAddress(alamat);
+        PreferencedHelper.setTel(telepon);
+        PreferencedHelper.setUname(username);
+        PreferencedHelper.setAkses(akses);
     }
-
 }

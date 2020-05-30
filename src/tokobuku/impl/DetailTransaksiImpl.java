@@ -27,7 +27,7 @@ public class DetailTransaksiImpl implements DetailTransaksiInterface{
     @Override
     public void insert(DetailTransaksi detailtrx) throws SQLException {
         String sql = "CALL insert_detailtrx(?,?,?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setInt(1, detailtrx.getId_trx());
             ps.setString(2, detailtrx.getIsbn());
             ps.setInt(3, detailtrx.getBanyak());
@@ -39,7 +39,7 @@ public class DetailTransaksiImpl implements DetailTransaksiInterface{
     @Override
     public void update(DetailTransaksi detailtrx) throws SQLException {
         String sql = "CALL update_detailtrx(?,?,?,?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setInt(1, detailtrx.getId_detail_trx());
             ps.setInt(2, detailtrx.getId_trx());
             ps.setString(3, detailtrx.getIsbn());
@@ -52,7 +52,7 @@ public class DetailTransaksiImpl implements DetailTransaksiInterface{
     @Override
     public void delete(DetailTransaksi detailtrx) throws SQLException {
         String sql = "CALL delete_detailtrx(?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setInt(1, detailtrx.getId_detail_trx());
             ps.executeUpdate();
             listDetailTransaksis.remove(detailtrx.getId_detail_trx()-1);

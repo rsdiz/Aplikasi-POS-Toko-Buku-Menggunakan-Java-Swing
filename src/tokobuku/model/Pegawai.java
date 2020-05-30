@@ -5,29 +5,32 @@ package tokobuku.model;
  * @author Rosyid Iz
  */
 public class Pegawai {
-    private int id_kasir;
+    private int idKasir;
     private String nama;
     private String alamat;
     private String telepon;
     private String username;
     private String password;
+    private String shif;
+    private String salt;
+    private String akses;
     
     /**
      * Mengembalikan id kasir/pegawai
      * @return a <code>int</code>
      */
-    public int getId()
+    public int getIdKasir()
     {
-        return this.id_kasir;
+        return this.idKasir;
     }
     
     /**
      * Mengubah id kasir/pegawai
-     * @param id_kasir 
+     * @param idKasir 
      */
-    public void setId(int id_kasir)
+    public void setIdKasir(int idKasir)
     {
-        this.id_kasir = id_kasir;
+        this.idKasir = idKasir;
     }
     
     /**
@@ -118,5 +121,29 @@ public class Pegawai {
     public void setTelepon(String telepon)
     {
         this.telepon = telepon;
+    }
+
+    public String getShif() {
+        return shif;
+    }
+
+    public void setShif(String shif) {
+        this.shif = shif;
+    }
+
+    public String getSalt() {
+        return salt;
+    }
+
+    public void setSalt(String salt) {
+        this.salt = salt;
+    }
+
+    public String getAkses() {
+        return akses;
+    }
+
+    public void setAkses(String akses) {
+        this.akses = akses;
     }
 }

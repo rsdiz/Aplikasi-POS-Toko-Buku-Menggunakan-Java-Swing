@@ -4,6 +4,7 @@ import java.awt.Component;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.plaf.ColorUIResource;
+import tokobuku.util.CustomFont;
 
 /**
  *
@@ -11,19 +12,17 @@ import javax.swing.plaf.ColorUIResource;
  */
 public class CustomJPanelView {
 
-    private UIManager ui = new UIManager();
-
     public void setPanel(String type) {
         switch (type) {
             case "black":
-                ui.put("OptionPane.background", new ColorUIResource(0x333333));
-                ui.put("Panel.background", new ColorUIResource(0x333333));
-                ui.put("OptionPane.warningDialog.titlePane.background", new ColorUIResource(0x232323));
-                ui.put("OptionPane.warningDialog.titlePane.foreground", new ColorUIResource(0xFFFFFF));
-                ui.put("OptionPane.messageForeground", new ColorUIResource(0xFFFFFF));
-                ui.put("OptionPane.foreground", new ColorUIResource(0xFFFFFF));
-                ui.put("OptionPane.messageFont", new java.awt.Font("Metropolis Medium", 0, 14));
-                ui.put("OptionPane.font", new java.awt.Font("Metropolis Medium", 0, 14));
+                UIManager.put("OptionPane.background", new ColorUIResource(0x333333));
+                UIManager.put("Panel.background", new ColorUIResource(0x333333));
+                UIManager.put("OptionPane.warningDialog.titlePane.background", new ColorUIResource(0x232323));
+                UIManager.put("OptionPane.warningDialog.titlePane.foreground", new ColorUIResource(0xFFFFFF));
+                UIManager.put("OptionPane.messageForeground", new ColorUIResource(0xFFFFFF));
+                UIManager.put("OptionPane.foreground", new ColorUIResource(0xFFFFFF));
+                UIManager.put("OptionPane.messageFont", CustomFont.getFont("Bahnschrift", 14));
+                UIManager.put("OptionPane.font", CustomFont.getFont("Bahnschrift", 14));
                 break;
         }
     }
@@ -49,17 +48,17 @@ public class CustomJPanelView {
     }
 
     public int displayConfirmDialog(Component parent, String message, String title) {
-        int value = JOptionPane.showConfirmDialog(parent, message, title, JOptionPane.YES_NO_CANCEL_OPTION);
+        int value = JOptionPane.showConfirmDialog(parent, message, title, JOptionPane.YES_NO_OPTION);
         resetUI();
         return value;
     }
 
     private void resetUI() {
-        ui.put("OptionPane.background", new ColorUIResource(238, 238, 238));
-        ui.put("Panel.background", new ColorUIResource(238, 238, 238));
-        ui.put("OptionPane.warningDialog.titlePane.background", new ColorUIResource(238, 238, 238));
-        ui.put("OptionPane.warningDialog.titlePane.foreground", new ColorUIResource(0, 0, 0));
-        ui.put("OptionPane.messageForeground", new ColorUIResource(0, 0, 0));
-        ui.put("OptionPane.foreground", new ColorUIResource(0, 0, 0));
+        UIManager.put("OptionPane.background", new ColorUIResource(238, 238, 238));
+        UIManager.put("Panel.background", new ColorUIResource(238, 238, 238));
+        UIManager.put("OptionPane.warningDialog.titlePane.background", new ColorUIResource(238, 238, 238));
+        UIManager.put("OptionPane.warningDialog.titlePane.foreground", new ColorUIResource(0, 0, 0));
+        UIManager.put("OptionPane.messageForeground", new ColorUIResource(0, 0, 0));
+        UIManager.put("OptionPane.foreground", new ColorUIResource(0, 0, 0));
     }
 }

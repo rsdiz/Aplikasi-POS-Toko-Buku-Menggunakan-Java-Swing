@@ -24,7 +24,7 @@ import tokobuku.util.CustomFont;
  * @author Rosyid Iz
  */
 public class PelangganPanelView{
-    private static final Font DEFAULT_FONT = new CustomFont().getFont("bahnschrift", 14);
+    private static final Font DEFAULT_FONT = CustomFont.getFont("bahnschrift", 14);
 
     private JPanel basePanel;
     private final JPanel panelColumn;
@@ -136,7 +136,7 @@ public class PelangganPanelView{
         columnEdit = new javax.swing.JTextField();
         columnEdit.setEditable(false);
         columnEdit.setBackground(new java.awt.Color(60, 180, 60));
-        columnEdit.setFont(new CustomFont().getFont("bebas", 14));
+        columnEdit.setFont(CustomFont.getFont("bebas", 14));
         columnEdit.setForeground(new java.awt.Color(255, 255, 255));
         columnEdit.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         columnEdit.setText("Edit");
@@ -160,7 +160,7 @@ public class PelangganPanelView{
         columnHapus = new javax.swing.JTextField();
         columnHapus.setEditable(false);
         columnHapus.setBackground(new java.awt.Color(255, 60, 60));
-        columnHapus.setFont(new CustomFont().getFont("bebas", 14));
+        columnHapus.setFont(CustomFont.getFont("bebas", 14));
         columnHapus.setForeground(new java.awt.Color(255, 255, 255));
         columnHapus.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         columnHapus.setText("Hapus");

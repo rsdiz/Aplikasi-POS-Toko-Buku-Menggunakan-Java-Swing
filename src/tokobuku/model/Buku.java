@@ -12,8 +12,8 @@ public class Buku {
     private String penerbit;
     private String tahun;
     private int stok;
-    private float harga_pokok;
-    private float harga_jual;
+    private int harga_pokok;
+    private int harga_jual;
     private byte[] image;
 
     public String getIsbn() {
@@ -126,9 +126,9 @@ public class Buku {
 
     /**
      * Mengembalikan harga pokok buku
-     * @return a <code>float</code>
+     * @return a <code>int</code>
      */
-    public float getHarga_pokok() {
+    public int getHarga_pokok() {
         return harga_pokok;
     }
     
@@ -136,15 +136,15 @@ public class Buku {
      * Mengubah Harga pokok buku
      * @param harga_pokok 
      */
-    public void setHarga_pokok(float harga_pokok) {
+    public void setHarga_pokok(int harga_pokok) {
         this.harga_pokok = harga_pokok;
     }
 
     /**
      * Mengembalikan harga jual buku
-     * @return a <code>float</code>
+     * @return a <code>int</code>
      */
-    public float getHarga_jual() {
+    public int getHarga_jual() {
         return harga_jual;
     }
 
@@ -152,7 +152,7 @@ public class Buku {
      * Mengubah harga jual buku
      * @param harga_jual 
      */
-    public void setHarga_jual(float harga_jual) {
+    public void setHarga_jual(int harga_jual) {
         this.harga_jual = harga_jual;
     }
 

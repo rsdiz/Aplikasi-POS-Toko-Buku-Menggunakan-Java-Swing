@@ -36,21 +36,19 @@ public class AddDetailTransaksiView {
     /**
      * Font Bahnscrift, Style Plain, size 14
      */
-    private final static Font DEFAULT_FONT = new CustomFont().getFont("Bahnschrift", 14);
+    private final Font DEFAULT_FONT = CustomFont.getFont("Bahnschrift", 14);
     /**
      * Black 35,35,35
      */
-    private final static java.awt.Color COLOR35 = new java.awt.Color(35, 35, 35);
+    private final java.awt.Color COLOR35 = new java.awt.Color(35, 35, 35);
     /**
      * White 255,255,255
      */
-    private final static java.awt.Color COLOR255 = new java.awt.Color(255, 255, 255);
+    private final java.awt.Color COLOR255 = new java.awt.Color(255, 255, 255);
 
-    private final static Formatter<Float> FLOAT_F = new Formatter<>();
-    private final static Formatter<Integer> INT_F = new Formatter<>();
+    private final Formatter<Integer> INT_F = new Formatter<>();
 
     private final int index;
-    private final Formatter<Integer> uang;
     private JPanel parentPanel;
     private final JPanel basePanel;
     private final JTextField tf_noDetail;
@@ -88,7 +86,6 @@ public class AddDetailTransaksiView {
         // Inisialisasi
         this.index = index;
         this.detailImpl = inpDetailImpl;
-        this.uang = new Formatter<>();
         this.detailTransaksi = inpDetailImpl.listDetailTransaksis.get(index - 1);
         this.listBukus = listBukus;
         this.basePanel = new javax.swing.JPanel();
@@ -304,7 +301,7 @@ public class AddDetailTransaksiView {
             JTextField textISBN = new javax.swing.JTextField();
             textISBN.setEditable(false);
             textISBN.setBackground(new java.awt.Color(255, 255, 255));
-            textISBN.setFont(new CustomFont().getFont("bahnschrift", 24));
+            textISBN.setFont(CustomFont.getFont("bahnschrift", 24));
             textISBN.setForeground(new java.awt.Color(222, 222, 222));
             textISBN.setHorizontalAlignment(javax.swing.JTextField.CENTER);
             textISBN.setText("ISBN:");
@@ -319,7 +316,7 @@ public class AddDetailTransaksiView {
             JComboBox<String> cb_isbn = new javax.swing.JComboBox<>();
             cb_isbn.setBackground(new java.awt.Color(80, 80, 80));
             cb_isbn.setEditable(true);
-            cb_isbn.setFont(new CustomFont().getFont("bahnschrift", 24));
+            cb_isbn.setFont(CustomFont.getFont("bahnschrift", 24));
             cb_isbn.setForeground(new java.awt.Color(222, 222, 222));
             cb_isbn.setMaximumRowCount(10);
             cb_isbn.removeAllItems();
@@ -334,7 +331,7 @@ public class AddDetailTransaksiView {
 
             JButton buttonSelect = new javax.swing.JButton();
             buttonSelect.setBackground(new java.awt.Color(51, 255, 51));
-            buttonSelect.setFont(new CustomFont().getFont("bahnschrift", 18));
+            buttonSelect.setFont(CustomFont.getFont("bahnschrift", 18));
             buttonSelect.setText("PILIH");
             panel.add(buttonSelect, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 30, 120, 40));
 
@@ -343,19 +340,19 @@ public class AddDetailTransaksiView {
             panel.add(imageBuku, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 100, -1, -1));
 
             JLabel judulBuku = new javax.swing.JLabel();
-            judulBuku.setFont(new CustomFont().getFont("bahnschrift", 16));
+            judulBuku.setFont(CustomFont.getFont("bahnschrift", 16));
             judulBuku.setForeground(new java.awt.Color(255, 255, 255));
             judulBuku.setText("judul_buku");
             panel.add(judulBuku, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 100, 410, 40));
 
             JLabel penulisBuku = new javax.swing.JLabel();
-            penulisBuku.setFont(new CustomFont().getFont("bahnschrift", 14));
+            penulisBuku.setFont(CustomFont.getFont("bahnschrift", 14));
             penulisBuku.setForeground(new java.awt.Color(255, 255, 255));
             penulisBuku.setText("penulis");
             panel.add(penulisBuku, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 150, 240, 20));
 
             JLabel penerbit_tahun = new javax.swing.JLabel();
-            penerbit_tahun.setFont(new CustomFont().getFont("bahnschrift", 14));
+            penerbit_tahun.setFont(CustomFont.getFont("bahnschrift", 14));
             penerbit_tahun.setForeground(new java.awt.Color(255, 255, 255));
             penerbit_tahun.setText("penerbit, tahun");
             panel.add(penerbit_tahun, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 180, 240, 20));
@@ -363,7 +360,7 @@ public class AddDetailTransaksiView {
             JTextField tf_hargaBuku = new javax.swing.JTextField();
             tf_hargaBuku.setEditable(false);
             tf_hargaBuku.setBackground(new java.awt.Color(40, 40, 40));
-            tf_hargaBuku.setFont(new CustomFont().getFont("bebas", 18));
+            tf_hargaBuku.setFont(CustomFont.getFont("bebas", 18));
             tf_hargaBuku.setForeground(new java.awt.Color(255, 255, 255));
             tf_hargaBuku.setHorizontalAlignment(javax.swing.JTextField.CENTER);
             tf_hargaBuku.setText("Harga");
@@ -396,7 +393,7 @@ public class AddDetailTransaksiView {
                         judulBuku.setText(bukus.getJudul_buku());
                         penulisBuku.setText(bukus.getPenulis());
                         penerbit_tahun.setText(bukus.getPenerbit() + ", " + bukus.getTahun());
-                        tf_hargaBuku.setText(String.valueOf(FLOAT_F.rupiah(bukus.getHarga_jual())));
+                        tf_hargaBuku.setText(String.valueOf(INT_F.rupiah(bukus.getHarga_jual())));
                         break;
                     }
                 }

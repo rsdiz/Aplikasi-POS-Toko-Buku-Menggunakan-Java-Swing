@@ -30,13 +30,11 @@ import tokobuku.view.LoginView;
  */
 public class SistemTokoBuku {
 
-    final static PreferencedHelper PREFS = new PreferencedHelper();
-
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        if (PREFS.getLogin()) {
+        if (PreferencedHelper.getLogin()) {
             DashboardPegawaiView dashboard = new DashboardPegawaiView();
             dashboard.setVisible(true);
         } else {

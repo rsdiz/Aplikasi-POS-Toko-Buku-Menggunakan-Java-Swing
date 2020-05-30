@@ -23,7 +23,7 @@ public class BukuImpl implements BukuInterface {
     @Override
     public void insert(Buku buku) throws SQLException {
         String sql = "CALL insert_buku(?,?,?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setString(1, buku.getIsbn());
             ps.setString(2, buku.getKategori());
             ps.setString(3, buku.getJudul_buku());
@@ -40,7 +40,7 @@ public class BukuImpl implements BukuInterface {
     @Override
     public void update(Buku buku) throws SQLException {
         String sql = "CALL update_buku(?,?,?,?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setString(1, buku.getIsbn());
             ps.setString(2, buku.getIsbn());
             ps.setString(3, buku.getKategori());
@@ -58,7 +58,7 @@ public class BukuImpl implements BukuInterface {
     @Override
     public void delete(Buku buku) throws SQLException {
         String sql = "CALL delete_buku(?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setString(1, buku.getIsbn());
             ps.executeUpdate();
         }
@@ -69,7 +69,7 @@ public class BukuImpl implements BukuInterface {
         List<Buku> listBuku = new ArrayList<>();
         try {
             String sql = "CALL search_buku(?)";
-            PreparedStatement ps = con.prepareStatement(sql);
+            PreparedStatement ps = con.prepareCall(sql);
             ps.setString(1, keywords);
             ResultSet res = ps.executeQuery();
             while (res.next()) {
@@ -104,7 +104,12 @@ public class BukuImpl implements BukuInterface {
     @Override
     public List<Buku> loadAllBy(String type) throws SQLException {
         List<Buku> listBuku = new ArrayList<>();
-        if ("judul_buku".equalsIgnoreCase(type) | "isbn".equalsIgnoreCase(type) | "penulis".equalsIgnoreCase(type) | "penerbit".equalsIgnoreCase(type)) {
+        if (
+                "judul_buku".equalsIgnoreCase(type) | 
+                "isbn".equalsIgnoreCase(type) | 
+                "penulis".equalsIgnoreCase(type) | 
+                "penerbit".equalsIgnoreCase(type)
+           ) {
             try {
                 String sql = "SELECT * FROM data_buku ORDER BY " + type;
                 Statement statement = con.createStatement();
@@ -131,8 +136,8 @@ public class BukuImpl implements BukuInterface {
         buku.setPenerbit(res.getString("penerbit"));
         buku.setTahun(res.getString("tahun"));
         buku.setStok(res.getInt("stok"));
-        buku.setHarga_pokok(res.getFloat("harga_pokok"));
-        buku.setHarga_jual(res.getFloat("harga_jual"));
+        buku.setHarga_pokok(res.getInt("harga_pokok"));
+        buku.setHarga_jual(res.getInt("harga_jual"));
         buku.setIsbn(res.getString("isbn"));
         Blob gambarBlob = res.getBlob("gambar");
         if (gambarBlob != null) {

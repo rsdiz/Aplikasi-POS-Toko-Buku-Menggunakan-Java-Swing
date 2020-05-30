@@ -6,9 +6,6 @@ import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -80,16 +77,16 @@ public class TransaksiPanelView {
 
         number = new JLabel();
         number.setForeground(Color.WHITE);
-        number.setFont(new CustomFont().getFont("bebas", 36));
+        number.setFont(CustomFont.getFont("bebas", 36));
         number.setHorizontalAlignment(SwingConstants.CENTER);
 
         tanggal = new JLabel();
         tanggal.setForeground(Color.WHITE);
-        tanggal.setFont(new CustomFont().getFont("Bahnschrift", 1, 18));
+        tanggal.setFont(CustomFont.getFont("Bahnschrift", 1, 18));
 
         namaPembeli = new JLabel();
         namaPembeli.setForeground(Color.WHITE);
-        namaPembeli.setFont(new CustomFont().getFont("Bahnschrift", 14));
+        namaPembeli.setFont(CustomFont.getFont("Bahnschrift", 14));
         namaPembeli.setVerticalAlignment(SwingConstants.TOP);
 
     }
@@ -205,7 +202,7 @@ public class TransaksiPanelView {
         this.buttonAddTransaksi = btnTambah;
     }
 
-    private void setDetail() {
+    private synchronized void setDetail() {
         txtNoTrx.setText("No Transaksi: " + transaksi.getId());
         txtNama_pelanggan.setText("Pelanggan: " + transaksi.getNamaPelanggan());
         txtNama_kasir.setText("Kasir: " + transaksi.getNamaPetugas());

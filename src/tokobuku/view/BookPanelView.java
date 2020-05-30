@@ -64,43 +64,43 @@ public class BookPanelView {
         
         //set judul buku
 //        new java.awt.Font("Bahnschrift", 0, 18)
-        judulBukuText.setFont(new CustomFont().getFont("bahnschrift", 18));
+        judulBukuText.setFont(CustomFont.getFont("bahnschrift", 18));
         judulBukuText.setText(judul_buku);
         judulBukuText.setToolTipText(judul_buku);
         bookPanel.add(judulBukuText, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 10, 360, -1));
 //        new java.awt.Font("Tahoma", 0, 12)
-        isbnText.setFont(new CustomFont().getFont("asap",12)); // NOI18N
+        isbnText.setFont(CustomFont.getFont("asap",12)); // NOI18N
         isbnText.setText("ISBN: "+isbn);
         bookPanel.add(isbnText, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 40, 230, -1));
         
         //set kategori
 //        new java.awt.Font("Tahoma", 0, 14)
-        kategoriText.setFont(new CustomFont().getFont(14));
+        kategoriText.setFont(CustomFont.getFont(14));
         kategoriText.setText(kategori);
         bookPanel.add(kategoriText, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 60, 210, 20));
         
         //set penulis
 //        new java.awt.Font("Tahoma", 0, 14)
-        penulisText.setFont(new CustomFont().getFont(14));
+        penulisText.setFont(CustomFont.getFont(14));
         penulisText.setText(penulis);
         bookPanel.add(penulisText, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 80, 200, 30));
         
         //set penerbit
 //        new java.awt.Font("Tahoma", 0, 14)
-        penerbitText.setFont(new CustomFont().getFont(14));
+        penerbitText.setFont(CustomFont.getFont(14));
         penerbitText.setText(penerbit+", "+tahun);
         bookPanel.add(penerbitText, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 110, 210, -1));
         
         //set stok
 //        new java.awt.Font("Tahoma", 0, 18)
-        stokText.setFont(new CustomFont().getFont(18));
+        stokText.setFont(CustomFont.getFont(18));
         stokText.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         stokText.setText("Stok: "+String.valueOf(stok));
         bookPanel.add(stokText, new org.netbeans.lib.awtextra.AbsoluteConstraints(340, 50, 130, 20));
         
         //set harga_jual
 //        new java.awt.Font("Tahoma", 1, 24)
-        hargaJualText.setFont(new CustomFont().getFont().deriveFont(1, 20));
+        hargaJualText.setFont(CustomFont.getFont().deriveFont(1, 20));
         hargaJualText.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         hargaJualText.setText(String.valueOf(floatF.rupiah(harga_jual)));
         hargaJualText.setToolTipText("Harga: "+floatF.rupiah(harga_jual));

@@ -18,12 +18,12 @@ import tokobuku.util.ConnectionUtil;
 public class PelangganImpl implements PelangganInterface {
 
     private final Connection con = ConnectionUtil.getDB();
-    public final List<Pelanggan> listPelanggans = new ArrayList<>();
+    public List<Pelanggan> listPelanggans = new ArrayList<>();
 
     @Override
     public void insert(Pelanggan pelanggan) throws SQLException {
-        String sql = "CALL insert_pelanggan(?,?,?,?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        String sql = "{ CALL insert_pelanggan(?,?,?,?) }";
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setInt(1, pelanggan.getId_pelanggan());
             ps.setString(2, pelanggan.getNama_pelanggan());
             ps.setString(3, pelanggan.getAlamat());
@@ -35,8 +35,8 @@ public class PelangganImpl implements PelangganInterface {
 
     @Override
     public void update(Pelanggan pelanggan) throws SQLException {
-        String sql = "CALL update_pelanggan(?,?,?,?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        String sql = "{ CALL update_pelanggan(?,?,?,?) }";
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setInt(1, pelanggan.getId_pelanggan());
             ps.setString(2, pelanggan.getNama_pelanggan());
             ps.setString(3, pelanggan.getAlamat());
@@ -48,8 +48,8 @@ public class PelangganImpl implements PelangganInterface {
 
     @Override
     public void delete(Pelanggan pelanggan) throws SQLException {
-        String sql = "CALL delete_pelanggan(?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        String sql = "{ CALL delete_pelanggan(?) }";
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setInt(1, pelanggan.getId_pelanggan());
             ps.executeUpdate();
             listPelanggans.remove(pelanggan.getId_pelanggan()-1);

@@ -23,7 +23,7 @@ public class TransaksiImpl implements TransaksiInterface{
     @Override
     public void insert(Transaksi transaksi) throws SQLException {
         String sql = "CALL insert_transaksi(?,?,?,?,?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setInt(1, transaksi.getId());
             ps.setInt(2, transaksi.getIdPelanggan());
             ps.setInt(3, transaksi.getIdPetugas());
@@ -37,7 +37,7 @@ public class TransaksiImpl implements TransaksiInterface{
     @Override
     public void update(Transaksi transaksi) throws SQLException {
         String sql = "CALL update_transaksi(?,?,?,?,?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setInt(1, transaksi.getId());
             ps.setInt(2, transaksi.getIdPelanggan());
             ps.setInt(3, transaksi.getIdPetugas());
@@ -51,7 +51,7 @@ public class TransaksiImpl implements TransaksiInterface{
     @Override
     public void delete(Transaksi transaksi) throws SQLException {
         String sql = "CALL delete_transaksi(?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setInt(1, transaksi.getId());
             ps.executeUpdate();
             listTransaksis.remove(transaksi.getId()-1);

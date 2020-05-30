@@ -10,25 +10,25 @@ import java.io.InputStream;
  * @author Rosyid Iz
  */
 public class CustomFont {
-    private final String fileAsap = "/tokobuku/fonts/Asap-Regular.ttf";
-    private final String fileBahnschrift = "/tokobuku/fonts/bahnschrift.ttf";
-    private final String fileBebas = "/tokobuku/fonts/bebas.ttf";
-    private final String fileTahoma = "/tokobuku/fonts/tahoma.ttf";
+    private static final String FILE_ASAP = "/tokobuku/fonts/Asap-Regular.ttf";
+    private static final String FILE_BAHNSCHRIFT = "/tokobuku/fonts/bahnschrift.ttf";
+    private static final String FILE_BEBAS = "/tokobuku/fonts/bebas.ttf";
+    private static final String FILE_TAHOMA = "/tokobuku/fonts/tahoma.ttf";
     
-    private Font fontAsap;
-    private Font fontBahnschrift;
-    private Font fontBebas;
-    private Font fontTahoma;
+    private static Font fontAsap;
+    private static Font fontBahnschrift;
+    private static Font fontBebas;
+    private static Font fontTahoma;
 
     public CustomFont() {
         try {
-            InputStream is = CustomFont.class.getResourceAsStream(fileAsap);
+            InputStream is = CustomFont.class.getResourceAsStream(FILE_ASAP);
             fontAsap = Font.createFont(Font.TRUETYPE_FONT, is);
-            is = CustomFont.class.getResourceAsStream(fileBahnschrift);
+            is = CustomFont.class.getResourceAsStream(FILE_BAHNSCHRIFT);
             fontBahnschrift = Font.createFont(Font.TRUETYPE_FONT, is);
-            is = CustomFont.class.getResourceAsStream(fileBebas);
+            is = CustomFont.class.getResourceAsStream(FILE_BEBAS);
             fontBebas = Font.createFont(Font.TRUETYPE_FONT, is);
-            is = CustomFont.class.getResourceAsStream(fileTahoma);
+            is = CustomFont.class.getResourceAsStream(FILE_TAHOMA);
             fontTahoma = Font.createFont(Font.TRUETYPE_FONT, is);
             is.close();
         } catch (FontFormatException | IOException ex) {
@@ -39,7 +39,7 @@ public class CustomFont {
         }
     }
     
-    public Font getFont(String font, float size) {
+    public static Font getFont(String font, float size) {
         if ("asap".equalsIgnoreCase(font)) {
             return fontAsap = fontAsap.deriveFont(size);
         } else if ("bahnschrift".equalsIgnoreCase(font)) {
@@ -49,12 +49,12 @@ public class CustomFont {
         } else if ("tahoma".equalsIgnoreCase(font)) {
             return fontTahoma = fontTahoma.deriveFont(size);
         } else {
-            Font f;
-            return f = Float.isNaN(size) ? getFont() : getFont(size);
+            Font returnFont = Float.isNaN(size) ? getFont() : getFont(size);
+            return returnFont;
         }
     }
 
-    public Font getFont(String font, int type, float size) {
+    public static Font getFont(String font, int type, float size) {
         if ("asap".equalsIgnoreCase(font)) {
             return fontAsap = fontAsap.deriveFont(type, size);
         } else if ("bahnschrift".equalsIgnoreCase(font)) {
@@ -64,20 +64,20 @@ public class CustomFont {
         } else if ("tahoma".equalsIgnoreCase(font)) {
             return fontTahoma = fontTahoma.deriveFont(type, size);
         } else {
-            Font f;
-            return f = Float.isNaN(size) ? getFont() : getFont(type, size);
+            Font returnFont = Float.isNaN(size) ? getFont() : getFont(type, size);
+            return returnFont;
         }
     }
 
-    public Font getFont() {
+    public static Font getFont() {
         return fontTahoma = fontTahoma.deriveFont(12);
     }
     
-    public Font getFont(float size) {
+    public static Font getFont(float size) {
         return fontTahoma = fontTahoma.deriveFont(size);
     }
     
-    public Font getFont(int type, float size) {
+    public static Font getFont(int type, float size) {
         return fontTahoma = fontTahoma.deriveFont(type, size);
     }
 }

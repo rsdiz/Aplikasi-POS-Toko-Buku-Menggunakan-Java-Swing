@@ -7,12 +7,18 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Timer;
@@ -26,16 +32,19 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import tokobuku.impl.BukuImpl;
 import tokobuku.impl.DetailTransaksiImpl;
+import tokobuku.impl.PegawaiImpl;
 import tokobuku.impl.PelangganImpl;
 import tokobuku.impl.TransaksiImpl;
 import tokobuku.model.Buku;
 import tokobuku.model.DetailTransaksi;
+import tokobuku.model.Pegawai;
 import tokobuku.model.Pelanggan;
 import tokobuku.model.Transaksi;
 import tokobuku.util.DragWindow;
 import tokobuku.util.PreferencedHelper;
 import tokobuku.util.CustomFont;
 import tokobuku.util.Formatter;
+import tokobuku.util.PasswordUtils;
 
 /**
  *
@@ -45,19 +54,21 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
 
     private final Formatter<Date> tanggal = new Formatter<>();
 
-    private static final PreferencedHelper PREFS = new PreferencedHelper();
     private final BukuImpl buku = new BukuImpl();
     private List<Buku> listBuku = new ArrayList<>();
     private final TransaksiImpl transaksi = new TransaksiImpl();
     private List<Transaksi> listTransaksi = transaksi.listTransaksis;
     private final PelangganImpl pelanggan = new PelangganImpl();
     private List<Pelanggan> listPelanggans = pelanggan.listPelanggans;
-    private DetailTransaksiImpl detailTrx = new DetailTransaksiImpl();
+    private final PegawaiImpl pegawai = new PegawaiImpl();
+    private List<Pegawai> listPegawais = pegawai.listPegawais;
+    private final DetailTransaksiImpl detailTrx = new DetailTransaksiImpl();
     private List<DetailTransaksi> listDetailTransaksis = detailTrx.listDetailTransaksis;
 
     private int totalBuku = 0;
     private int totalTransaksi = 0;
     private int totalPelanggan = 0;
+    private int totalPegawai = 0;
 
     private Boolean inputNamaP = false;
     private Boolean inputAlamatP = false;
@@ -153,15 +164,22 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
      */
     public DashboardPegawaiView() {
         initComponents();
+        if (!PreferencedHelper.getAkses().equalsIgnoreCase("admin")) {
+            tabbedPanel.remove(4);
+        }
         panelLoadingBuku.setVisible(false);
         panelTambahPelanggan.setVisible(false);
         panelDetailTransaksi.setVisible(false);
         panelTambahTransaksi.setVisible(false);
+        panelDTPegawai.setVisible(false);
+        panelTambahPegawai.setVisible(false);
+        labelWarningPwd.setVisible(false);
+        labelWarningUname.setVisible(false);
+        labelWarningUpwd.setVisible(false);
         panelInfo.setVisible(true);
         getCurTime();
+        setDataPegawai();
         DragWindow dragWindow = new DragWindow(DashboardPegawaiView.this);
-        namaKasirText.setText(PREFS.getName());
-        noTeleponText.setText(PREFS.getTel());
 
         Thread threadBuku = new Thread("thread-buku") {
             @Override
@@ -170,14 +188,6 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             }
         };
         threadBuku.start();
-        Thread threadTransaksi = new Thread("thread-transaksi") {
-            @Override
-            public void run() {
-                syncDataTransaksi();
-                loadDataTransaksi();
-            }
-        };
-        threadTransaksi.start();
         Thread threadPelanggan = new Thread("thread-pelanggan") {
             @Override
             public void run() {
@@ -186,6 +196,22 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             }
         };
         threadPelanggan.start();
+        Thread threadTransaksi = new Thread("thread-transaksi") {
+            @Override
+            public void run() {
+                syncDataTransaksi();
+                loadDataTransaksi();
+            }
+        };
+        threadTransaksi.start();
+        Thread threadPegawai = new Thread("thread-pegawai") {
+            @Override
+            public void run() {
+                syncDataPegawai();
+                loadDataPegawai();
+            }
+        };
+        threadPegawai.start();
     }
 
     /**
@@ -270,8 +296,10 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         panelListBuku.setLayout(new java.awt.GridLayout(rows, columns, 10, 10));
         if (rows < 4) {
             scrollPanelListBuku.setPreferredSize(new Dimension(1030, (int) height + 5));
+            scrollPanelListBuku.getVerticalScrollBar().setUnitIncrement(0);
         } else {
             scrollPanelListBuku.setPreferredSize(new Dimension(1030, 545));
+            scrollPanelListBuku.getVerticalScrollBar().setUnitIncrement(20);
         }
         panelListBuku.setPreferredSize(new java.awt.Dimension(1045, (int) height));
         for (int i = 0; i < totalBuku; i++) {
@@ -292,7 +320,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             }
             bookPanelView.apply(panelListBuku);
         }
-        SwingUtilities.updateComponentTreeUI(panelListBuku);
+        SwingUtilities.updateComponentTreeUI(tabDaftarBuku);
     }
 
     /**
@@ -300,6 +328,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
      */
     private synchronized void syncDataTransaksi() {
         try {
+            transaksi.listTransaksis = new ArrayList<>();
             listTransaksi = transaksi.load();
         } catch (SQLException e) {
             System.out.println("Error Fetching Data Transaksi!");
@@ -326,8 +355,10 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         panelListTransaksi.setLayout(new GridLayout(rows, 1, 0, 5));
         if (rows < 5) {
             scrollPanelTransaksi.setPreferredSize(new Dimension(410, (int) height + 10));
+            scrollPanelTransaksi.getVerticalScrollBar().setUnitIncrement(1);
         } else {
             scrollPanelTransaksi.setPreferredSize(new Dimension(410, 470));
+            scrollPanelTransaksi.getVerticalScrollBar().setUnitIncrement(16);
         }
         panelListTransaksi.setPreferredSize(new Dimension(407, (int) height));
 
@@ -338,7 +369,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             transaksiPanelView.initBase(panelDetailTransaksi, scrollPanelDT, panelDT, panelInfo, panelTambahTransaksi, buttonAddTransaksi);
             transaksiPanelView.apply(panelListTransaksi);
         }
-        SwingUtilities.updateComponentTreeUI(panelListTransaksi);
+        SwingUtilities.updateComponentTreeUI(tabTransaksi);
     }
 
     /**
@@ -347,9 +378,11 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
      */
     private synchronized void syncDataPelanggan() {
         try {
+            pelanggan.listPelanggans = new ArrayList<>();
             listPelanggans = pelanggan.load();
         } catch (SQLException ex) {
-            Logger.getLogger(DashboardPegawaiView.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("Gagal menyinkronkan data pelanggan!\n"
+                    + "Error: " + ex.getMessage());
         }
     }
 
@@ -373,8 +406,10 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         panelListPelanggan.setLayout(new GridLayout(rows, 1, 0, 0));
         if (rows < 14) {
             scrolPanellListPelanggan.setPreferredSize(new Dimension(700, (int) height + 5));
+            scrolPanellListPelanggan.getVerticalScrollBar().setUnitIncrement(1);
         } else {
             scrolPanellListPelanggan.setPreferredSize(new Dimension(700, 610));
+            scrolPanellListPelanggan.getVerticalScrollBar().setUnitIncrement(16);
         }
         panelListPelanggan.setPreferredSize(new Dimension(700, (int) height));
 
@@ -384,7 +419,64 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             pelangganPanelView.apply(panelListPelanggan);
         }
         setCBpelanggan();
-        SwingUtilities.updateComponentTreeUI(panelListPelanggan);
+        SwingUtilities.updateComponentTreeUI(tabPelanggan);
+    }
+
+    /**
+     * Load Data Pegawai dari database, kemudian menyimpan ke List Pegawai
+     */
+    private synchronized void syncDataPegawai() {
+        try {
+            pegawai.listPegawais = new ArrayList<>();
+            listPegawais = pegawai.load();
+        } catch (SQLException ex) {
+            System.out.println("Gagal menyinkronkan data pegawai!\n"
+                    + "Error: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Mengambil data Pegawai dari list Pegawai, kemudian ditampilkan ke daftar
+     * pegawai
+     */
+    private synchronized void loadDataPegawai() {
+        listPegawais = pegawai.listPegawais;
+        totalPegawai = listPegawais.size();
+        setListPegawai();
+    }
+
+    /**
+     * Menampilkan data Pegawai ke Panel
+     */
+    private synchronized void setListPegawai() {
+        panelListPegawai.removeAll();
+        int column = totalPegawai;
+        float width = (column * 210);
+        if (column < 5) {
+            scrollPaneListlPegawai.setPreferredSize(new Dimension((int) width + 10, 210));
+            scrollPaneListlPegawai.getHorizontalScrollBar().setUnitIncrement(1);
+        } else {
+            scrollPaneListlPegawai.setPreferredSize(new Dimension(1030, 210));
+            scrollPaneListlPegawai.getHorizontalScrollBar().setUnitIncrement(16);
+        }
+        panelListPegawai.setLayout(new GridLayout(1, column, 0, 0));
+        panelListPegawai.setPreferredSize(new Dimension((int) width, 210));
+        for (int i = 0; i < totalPegawai; i++) {
+            final int index = i;
+            AddPegawaiPanelView p = new AddPegawaiPanelView(index, pegawai, listPegawais.get(i), panelDTPegawai);
+            p.init(tf_namaPegawai,
+                    tf_alamatPegawai,
+                    tf_notelpPegawai,
+                    tf_unamePegawai,
+                    labelIDPegawai,
+                    rb_kasir, rb_admin,
+                    rb_pagi, rb_sore,
+                    btnEditPegawai,
+                    btnHapusPegawai,
+                    btnEditPassword);
+            panelListPegawai.add(p.pegawaiPanelV);
+        }
+        SwingUtilities.updateComponentTreeUI(tabPegawai);
     }
 
     /**
@@ -396,6 +488,10 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        btnGroupShif = new javax.swing.ButtonGroup();
+        btnGroupAkses = new javax.swing.ButtonGroup();
+        btnGroupNewShif = new javax.swing.ButtonGroup();
+        btnGroupNewAkses = new javax.swing.ButtonGroup();
         dragPanel = new javax.swing.JPanel();
         textTitleBar = new javax.swing.JLabel();
         minimizedIcon = new javax.swing.JLabel();
@@ -495,6 +591,71 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         headEdit = new javax.swing.JTextField();
         headHapus = new javax.swing.JTextField();
         buttonTambahPelanggan = new javax.swing.JButton();
+        tabPegawai = new javax.swing.JPanel();
+        listPegawaiText = new javax.swing.JLabel();
+        panelTambahPegawai = new javax.swing.JPanel();
+        tf_newAlamatPegawai = new javax.swing.JTextField();
+        tf_newNamaPegawai = new javax.swing.JTextField();
+        tf_newNotelpPegawai = new javax.swing.JTextField();
+        tf_newUnamePegawai = new javax.swing.JTextField();
+        jTextField3 = new javax.swing.JTextField();
+        panelNewShif = new javax.swing.JPanel();
+        rb_newPagi = new javax.swing.JRadioButton();
+        rb_newSore = new javax.swing.JRadioButton();
+        jTextField4 = new javax.swing.JTextField();
+        panelNewAkses = new javax.swing.JPanel();
+        rb_newAdmin = new javax.swing.JRadioButton();
+        rb_newKasir = new javax.swing.JRadioButton();
+        labelInformasiAkun = new javax.swing.JLabel();
+        jSeparator2 = new javax.swing.JSeparator();
+        jSeparator4 = new javax.swing.JSeparator();
+        labelPengaturanAkun = new javax.swing.JLabel();
+        jpf_newUpass = new javax.swing.JPasswordField();
+        jpf_newPass = new javax.swing.JPasswordField();
+        btnShowUpwd = new javax.swing.JButton();
+        btnShowPwd = new javax.swing.JButton();
+        btnResetNewPegawai = new javax.swing.JButton();
+        panelTools = new javax.swing.JPanel();
+        tf_generatePassword = new javax.swing.JTextField();
+        btnGeneratePass = new javax.swing.JButton();
+        btnCopyGeneratePass = new javax.swing.JButton();
+        labelToolAkun = new javax.swing.JLabel();
+        jSeparator5 = new javax.swing.JSeparator();
+        btnTambahkanPegawai = new javax.swing.JButton();
+        labelWarningUN = new javax.swing.JLabel();
+        labelWarningPW = new javax.swing.JLabel();
+        labelWarningUPW = new javax.swing.JLabel();
+        newNomorPegawai = new javax.swing.JLabel();
+        labelWarningNama = new javax.swing.JLabel();
+        labelWarningUpwd = new javax.swing.JLabel();
+        labelWarningUname = new javax.swing.JLabel();
+        labelWarningPwd = new javax.swing.JLabel();
+        labelWarningAkses = new javax.swing.JLabel();
+        labelWarningShif = new javax.swing.JLabel();
+        labelWarningNoTelp = new javax.swing.JLabel();
+        labelWarningAlamat = new javax.swing.JLabel();
+        panelEditPegawai = new javax.swing.JPanel();
+        scrollPaneListlPegawai = new javax.swing.JScrollPane();
+        panelListPegawai = new javax.swing.JPanel();
+        panelDTPegawai = new javax.swing.JPanel();
+        listBukuText3 = new javax.swing.JLabel();
+        tf_alamatPegawai = new javax.swing.JTextField();
+        tf_notelpPegawai = new javax.swing.JTextField();
+        jTextField1 = new javax.swing.JTextField();
+        jPanel2 = new javax.swing.JPanel();
+        rb_pagi = new javax.swing.JRadioButton();
+        rb_sore = new javax.swing.JRadioButton();
+        tf_namaPegawai = new javax.swing.JTextField();
+        tf_unamePegawai = new javax.swing.JTextField();
+        jTextField2 = new javax.swing.JTextField();
+        jPanel3 = new javax.swing.JPanel();
+        rb_admin = new javax.swing.JRadioButton();
+        rb_kasir = new javax.swing.JRadioButton();
+        btnHapusPegawai = new javax.swing.JButton();
+        btnEditPassword = new javax.swing.JButton();
+        btnEditPegawai = new javax.swing.JButton();
+        labelIDPegawai = new javax.swing.JLabel();
+        btnTambahPegawai = new javax.swing.JButton();
         leftPanel = new javax.swing.JPanel();
         versionText = new javax.swing.JLabel();
         titleText = new javax.swing.JLabel();
@@ -819,6 +980,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         cb_namaPelanggan.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
         cb_namaPelanggan.setForeground(new java.awt.Color(255, 255, 255));
         cb_namaPelanggan.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
+        cb_namaPelanggan.setNextFocusableComponent(tf_uangTunai);
         cb_namaPelanggan.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 cb_namaPelangganItemStateChanged(evt);
@@ -899,6 +1061,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         tf_uangTunai.setCaretColor(new java.awt.Color(255, 255, 150));
         tf_uangTunai.setDisabledTextColor(new java.awt.Color(200, 200, 200));
         tf_uangTunai.setInputVerifier(ivUang);
+        tf_uangTunai.setNextFocusableComponent(buttonAddItem);
         panelTambahTransaksi.add(tf_uangTunai, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 110, 190, 40));
 
         textNoTransaksiAdd.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
@@ -922,6 +1085,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         buttonAddItem.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
         buttonAddItem.setForeground(new java.awt.Color(255, 255, 255));
         buttonAddItem.setText("Tambah Item");
+        buttonAddItem.setNextFocusableComponent(buttonTambahDataTrx);
         buttonAddItem.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 buttonAddItemMouseExited(evt);
@@ -1091,6 +1255,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         tf_newNamaPelanggan.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
         tf_newNamaPelanggan.setInputVerifier(ivBlank);
         tf_newNamaPelanggan.setName("tf_nama"); // NOI18N
+        tf_newNamaPelanggan.setNextFocusableComponent(tf_newAlamatP);
         tf_newNamaPelanggan.setPreferredSize(new java.awt.Dimension(280, 40));
         panelTambahPelanggan.add(tf_newNamaPelanggan, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 50, -1, -1));
 
@@ -1106,6 +1271,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         tf_newAlamatP.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
         tf_newAlamatP.setInputVerifier(ivBlank);
         tf_newAlamatP.setName("tf_alamat"); // NOI18N
+        tf_newAlamatP.setNextFocusableComponent(tf_newNoTelp);
         tf_newAlamatP.setPreferredSize(new java.awt.Dimension(280, 40));
         panelTambahPelanggan.add(tf_newAlamatP, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 130, -1, -1));
 
@@ -1121,6 +1287,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         tf_newNoTelp.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
         tf_newNoTelp.setInputVerifier(ivPhoneNumber);
         tf_newNoTelp.setName("tf_telp"); // NOI18N
+        tf_newNoTelp.setNextFocusableComponent(buttonTambahkanPelanggan);
         tf_newNoTelp.setPreferredSize(new java.awt.Dimension(280, 40));
         panelTambahPelanggan.add(tf_newNoTelp, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, -1, -1));
 
@@ -1128,6 +1295,8 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         buttonTambahkanPelanggan.setFont(new java.awt.Font("Bahnschrift", 1, 14)); // NOI18N
         buttonTambahkanPelanggan.setForeground(new java.awt.Color(255, 255, 255));
         buttonTambahkanPelanggan.setText("TAMBAHKAN");
+        buttonTambahkanPelanggan.setMultiClickThreshhold(1000L);
+        buttonTambahkanPelanggan.setNextFocusableComponent(buttonTambahPelanggan);
         buttonTambahkanPelanggan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 buttonTambahkanPelangganActionPerformed(evt);
@@ -1138,7 +1307,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         tabPelanggan.add(panelTambahPelanggan, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 195, 325, 410));
 
         scrolPanellListPelanggan.setBackground(new java.awt.Color(60, 60, 60));
-        scrolPanellListPelanggan.setBorder(null);
+        scrolPanellListPelanggan.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         scrolPanellListPelanggan.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrolPanellListPelanggan.setPreferredSize(new java.awt.Dimension(700, 610));
 
@@ -1234,6 +1403,501 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
 
         tabbedPanel.addTab("  Pelanggan  ", tabPelanggan);
 
+        tabPegawai.setBackground(new java.awt.Color(75, 75, 75));
+        tabPegawai.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        listPegawaiText.setFont(new CustomFont().getFont("bahnschrift", 36));
+        listPegawaiText.setForeground(new java.awt.Color(255, 255, 255));
+        listPegawaiText.setText("Data Pegawai Kasir");
+        tabPegawai.add(listPegawaiText, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 30, -1, -1));
+
+        panelTambahPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        panelTambahPegawai.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        tf_newAlamatPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        tf_newAlamatPegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        tf_newAlamatPegawai.setForeground(new java.awt.Color(255, 255, 255));
+        tf_newAlamatPegawai.setToolTipText("");
+        tf_newAlamatPegawai.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Alamat", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Bahnschrift", 0, 14), new java.awt.Color(255, 255, 255))); // NOI18N
+        tf_newAlamatPegawai.setCaretColor(new java.awt.Color(255, 255, 102));
+        tf_newAlamatPegawai.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        tf_newAlamatPegawai.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        panelTambahPegawai.add(tf_newAlamatPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 220, 280, 60));
+
+        tf_newNamaPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        tf_newNamaPegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        tf_newNamaPegawai.setForeground(new java.awt.Color(255, 255, 255));
+        tf_newNamaPegawai.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Nama", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Bahnschrift", 0, 14), new java.awt.Color(255, 255, 255))); // NOI18N
+        tf_newNamaPegawai.setCaretColor(new java.awt.Color(255, 255, 102));
+        tf_newNamaPegawai.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        tf_newNamaPegawai.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        panelTambahPegawai.add(tf_newNamaPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 100, 280, 60));
+
+        tf_newNotelpPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        tf_newNotelpPegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        tf_newNotelpPegawai.setForeground(new java.awt.Color(255, 255, 255));
+        tf_newNotelpPegawai.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "No. Telepon", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Bahnschrift", 0, 14), new java.awt.Color(255, 255, 255))); // NOI18N
+        tf_newNotelpPegawai.setCaretColor(new java.awt.Color(255, 255, 102));
+        tf_newNotelpPegawai.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        tf_newNotelpPegawai.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        panelTambahPegawai.add(tf_newNotelpPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 340, 280, 60));
+
+        tf_newUnamePegawai.setBackground(new java.awt.Color(65, 65, 65));
+        tf_newUnamePegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        tf_newUnamePegawai.setForeground(new java.awt.Color(255, 255, 255));
+        tf_newUnamePegawai.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Username", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Bahnschrift", 0, 14), new java.awt.Color(255, 255, 255))); // NOI18N
+        tf_newUnamePegawai.setCaretColor(new java.awt.Color(255, 255, 102));
+        tf_newUnamePegawai.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        tf_newUnamePegawai.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        tf_newUnamePegawai.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                tf_newUnamePegawaiKeyReleased(evt);
+            }
+        });
+        panelTambahPegawai.add(tf_newUnamePegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 100, 280, 60));
+
+        jTextField3.setBackground(new java.awt.Color(65, 65, 65));
+        jTextField3.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
+        jTextField3.setForeground(new java.awt.Color(255, 255, 255));
+        jTextField3.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        jTextField3.setText("Shif");
+        jTextField3.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        panelTambahPegawai.add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 460, 35, 20));
+
+        panelNewShif.setBackground(new java.awt.Color(65, 65, 65));
+        panelNewShif.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        panelNewShif.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        rb_newPagi.setBackground(new java.awt.Color(65, 65, 65));
+        btnGroupNewShif.add(rb_newPagi);
+        rb_newPagi.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        rb_newPagi.setForeground(new java.awt.Color(255, 255, 255));
+        rb_newPagi.setText("Pagi");
+        panelNewShif.add(rb_newPagi, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 130, 40));
+
+        rb_newSore.setBackground(new java.awt.Color(65, 65, 65));
+        btnGroupNewShif.add(rb_newSore);
+        rb_newSore.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        rb_newSore.setForeground(new java.awt.Color(255, 255, 255));
+        rb_newSore.setText("Sore");
+        panelNewShif.add(rb_newSore, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 10, 130, 40));
+
+        panelTambahPegawai.add(panelNewShif, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 470, 280, 55));
+
+        jTextField4.setBackground(new java.awt.Color(65, 65, 65));
+        jTextField4.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
+        jTextField4.setForeground(new java.awt.Color(255, 119, 119));
+        jTextField4.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        jTextField4.setText("Akses");
+        jTextField4.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        panelTambahPegawai.add(jTextField4, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 460, 50, 20));
+
+        panelNewAkses.setBackground(new java.awt.Color(65, 65, 65));
+        panelNewAkses.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 51, 51), 1, true));
+        panelNewAkses.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        rb_newAdmin.setBackground(new java.awt.Color(65, 65, 65));
+        btnGroupNewAkses.add(rb_newAdmin);
+        rb_newAdmin.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        rb_newAdmin.setForeground(new java.awt.Color(255, 255, 255));
+        rb_newAdmin.setText("Admin");
+        panelNewAkses.add(rb_newAdmin, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 130, 40));
+
+        rb_newKasir.setBackground(new java.awt.Color(65, 65, 65));
+        btnGroupNewAkses.add(rb_newKasir);
+        rb_newKasir.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        rb_newKasir.setForeground(new java.awt.Color(255, 255, 255));
+        rb_newKasir.setText("Kasir");
+        panelNewAkses.add(rb_newKasir, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 10, 130, 40));
+
+        panelTambahPegawai.add(panelNewAkses, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 470, 280, 55));
+
+        labelInformasiAkun.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        labelInformasiAkun.setForeground(new java.awt.Color(255, 255, 255));
+        labelInformasiAkun.setText("Informasi Akun");
+        panelTambahPegawai.add(labelInformasiAkun, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 40, -1, -1));
+        panelTambahPegawai.add(jSeparator2, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 50, 120, 10));
+        panelTambahPegawai.add(jSeparator4, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 50, 110, 10));
+
+        labelPengaturanAkun.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        labelPengaturanAkun.setForeground(new java.awt.Color(255, 255, 255));
+        labelPengaturanAkun.setText("Pengaturan Akun");
+        panelTambahPegawai.add(labelPengaturanAkun, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 40, -1, -1));
+
+        jpf_newUpass.setBackground(new java.awt.Color(65, 65, 65));
+        jpf_newUpass.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        jpf_newUpass.setForeground(new java.awt.Color(255, 255, 255));
+        jpf_newUpass.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Ulangi Password", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Bahnschrift", 0, 14), new java.awt.Color(255, 255, 255))); // NOI18N
+        jpf_newUpass.setCaretColor(new java.awt.Color(255, 255, 102));
+        jpf_newUpass.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        jpf_newUpass.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                jpf_newUpassKeyReleased(evt);
+            }
+        });
+        panelTambahPegawai.add(jpf_newUpass, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 340, 230, 60));
+
+        jpf_newPass.setBackground(new java.awt.Color(65, 65, 65));
+        jpf_newPass.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        jpf_newPass.setForeground(new java.awt.Color(255, 255, 255));
+        jpf_newPass.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Password", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Bahnschrift", 0, 14), new java.awt.Color(255, 255, 255))); // NOI18N
+        jpf_newPass.setCaretColor(new java.awt.Color(255, 255, 102));
+        jpf_newPass.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        jpf_newPass.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                jpf_newPassKeyReleased(evt);
+            }
+        });
+        panelTambahPegawai.add(jpf_newPass, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 220, 230, 60));
+
+        btnShowUpwd.setBackground(new java.awt.Color(70, 70, 70));
+        btnShowUpwd.setForeground(new java.awt.Color(255, 255, 255));
+        btnShowUpwd.setText("SHOW");
+        btnShowUpwd.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        btnShowUpwd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnShowUpwdActionPerformed(evt);
+            }
+        });
+        panelTambahPegawai.add(btnShowUpwd, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 347, 50, 50));
+
+        btnShowPwd.setBackground(new java.awt.Color(70, 70, 70));
+        btnShowPwd.setForeground(new java.awt.Color(255, 255, 255));
+        btnShowPwd.setText("SHOW");
+        btnShowPwd.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        btnShowPwd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnShowPwdActionPerformed(evt);
+            }
+        });
+        panelTambahPegawai.add(btnShowPwd, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 227, 50, 50));
+
+        btnResetNewPegawai.setBackground(new java.awt.Color(55, 55, 55));
+        btnResetNewPegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        btnResetNewPegawai.setForeground(new java.awt.Color(255, 153, 153));
+        btnResetNewPegawai.setText("ATUR ULANG");
+        btnResetNewPegawai.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnResetNewPegawaiActionPerformed(evt);
+            }
+        });
+        panelTambahPegawai.add(btnResetNewPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 390, 180, 50));
+
+        panelTools.setBackground(new java.awt.Color(60, 60, 60));
+        panelTools.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        tf_generatePassword.setBackground(new java.awt.Color(60, 60, 60));
+        tf_generatePassword.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        tf_generatePassword.setForeground(new java.awt.Color(255, 255, 255));
+        tf_generatePassword.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        tf_generatePassword.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        tf_generatePassword.setDisabledTextColor(new java.awt.Color(222, 222, 222));
+        tf_generatePassword.setEnabled(false);
+        panelTools.add(tf_generatePassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 20, 180, 50));
+
+        btnGeneratePass.setBackground(new java.awt.Color(51, 51, 255));
+        btnGeneratePass.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
+        btnGeneratePass.setForeground(new java.awt.Color(255, 255, 255));
+        btnGeneratePass.setText("<html>Generate<br>Password</html>");
+        btnGeneratePass.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        btnGeneratePass.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnGeneratePassActionPerformed(evt);
+            }
+        });
+        panelTools.add(btnGeneratePass, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 80, 100, 50));
+
+        btnCopyGeneratePass.setBackground(new java.awt.Color(75, 75, 75));
+        btnCopyGeneratePass.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
+        btnCopyGeneratePass.setForeground(new java.awt.Color(255, 255, 255));
+        btnCopyGeneratePass.setText("COPY");
+        btnCopyGeneratePass.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCopyGeneratePassActionPerformed(evt);
+            }
+        });
+        panelTools.add(btnCopyGeneratePass, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 80, 70, 50));
+
+        panelTambahPegawai.add(panelTools, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 100, 220, 150));
+
+        labelToolAkun.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        labelToolAkun.setForeground(new java.awt.Color(255, 255, 255));
+        labelToolAkun.setText("Tools");
+        panelTambahPegawai.add(labelToolAkun, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 40, -1, -1));
+        panelTambahPegawai.add(jSeparator5, new org.netbeans.lib.awtextra.AbsoluteConstraints(840, 50, 150, 10));
+
+        btnTambahkanPegawai.setBackground(new java.awt.Color(51, 255, 51));
+        btnTambahkanPegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        btnTambahkanPegawai.setText("TAMBAHKAN");
+        btnTambahkanPegawai.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnTambahkanPegawaiActionPerformed(evt);
+            }
+        });
+        panelTambahPegawai.add(btnTambahkanPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 470, 180, 50));
+
+        labelWarningUN.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        labelWarningUN.setForeground(new java.awt.Color(255, 153, 153));
+        labelWarningUN.setText("*) Belum diisi!");
+        labelWarningUN.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        panelTambahPegawai.add(labelWarningUN, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 170, 280, 40));
+        labelWarningUN.setVisible(false);
+
+        labelWarningPW.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        labelWarningPW.setForeground(new java.awt.Color(255, 153, 153));
+        labelWarningPW.setText("*) Belum diisi!");
+        labelWarningPW.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        panelTambahPegawai.add(labelWarningPW, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 290, 280, 40));
+        labelWarningPW.setVisible(false);
+
+        labelWarningUPW.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        labelWarningUPW.setForeground(new java.awt.Color(255, 153, 153));
+        labelWarningUPW.setText("*) Belum diisi!");
+        labelWarningUPW.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        panelTambahPegawai.add(labelWarningUPW, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 410, 280, 40));
+        labelWarningUPW.setVisible(false);
+
+        newNomorPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        newNomorPegawai.setForeground(new java.awt.Color(65, 65, 65));
+        newNomorPegawai.setText("jLabel1");
+        panelTambahPegawai.add(newNomorPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(860, 310, -1, -1));
+
+        labelWarningNama.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        labelWarningNama.setForeground(new java.awt.Color(255, 153, 153));
+        labelWarningNama.setText("*) Belum diisi!");
+        labelWarningNama.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        panelTambahPegawai.add(labelWarningNama, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 170, 280, 40));
+        labelWarningNama.setVisible(false);
+
+        labelWarningUpwd.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        labelWarningUpwd.setForeground(new java.awt.Color(255, 153, 153));
+        labelWarningUpwd.setText("*) Password tidak sama!");
+        labelWarningUpwd.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        panelTambahPegawai.add(labelWarningUpwd, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 410, 280, 40));
+
+        labelWarningUname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        labelWarningUname.setForeground(new java.awt.Color(255, 153, 153));
+        labelWarningUname.setText("<html>*) Username sudah terpakai,<br>&nbsp;&nbsp;&nbsp;&nbsp;gunakan username lain</html>");
+        labelWarningUname.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        panelTambahPegawai.add(labelWarningUname, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 165, 280, 40));
+
+        labelWarningPwd.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        labelWarningPwd.setForeground(new java.awt.Color(255, 153, 153));
+        labelWarningPwd.setText("<html>*) harap gunakan kombinasi huruf, angka, dan simbol. Minimal 8 digit karakter.</html>");
+        labelWarningPwd.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        panelTambahPegawai.add(labelWarningPwd, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 290, 280, 40));
+
+        labelWarningAkses.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        labelWarningAkses.setForeground(new java.awt.Color(255, 153, 153));
+        labelWarningAkses.setText("*) Belum dipilih!");
+        labelWarningAkses.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        panelTambahPegawai.add(labelWarningAkses, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 540, 280, 40));
+        labelWarningAkses.setVisible(false);
+
+        labelWarningShif.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        labelWarningShif.setForeground(new java.awt.Color(255, 153, 153));
+        labelWarningShif.setText("*) Belum dipilih!");
+        labelWarningShif.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        panelTambahPegawai.add(labelWarningShif, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 540, 280, 40));
+        labelWarningShif.setVisible(false);
+
+        labelWarningNoTelp.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        labelWarningNoTelp.setForeground(new java.awt.Color(255, 153, 153));
+        labelWarningNoTelp.setText("*) Belum diisi!");
+        labelWarningNoTelp.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        panelTambahPegawai.add(labelWarningNoTelp, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 410, 280, 40));
+        labelWarningNoTelp.setVisible(false);
+
+        labelWarningAlamat.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        labelWarningAlamat.setForeground(new java.awt.Color(255, 153, 153));
+        labelWarningAlamat.setText("*) Belum diisi!");
+        labelWarningAlamat.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        panelTambahPegawai.add(labelWarningAlamat, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 290, 280, 40));
+        labelWarningAlamat.setVisible(false);
+
+        tabPegawai.add(panelTambahPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 90, 1040, 585));
+
+        panelEditPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        panelEditPegawai.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        scrollPaneListlPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        scrollPaneListlPegawai.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        scrollPaneListlPegawai.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        scrollPaneListlPegawai.setPreferredSize(new java.awt.Dimension(1020, 215));
+
+        panelListPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        panelListPegawai.setLayout(new java.awt.GridLayout(1, 0));
+        scrollPaneListlPegawai.setViewportView(panelListPegawai);
+
+        panelEditPegawai.add(scrollPaneListlPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, -1, -1));
+
+        panelDTPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        panelDTPegawai.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
+        panelDTPegawai.setMaximumSize(new java.awt.Dimension(1020, 340));
+        panelDTPegawai.setMinimumSize(new java.awt.Dimension(1020, 340));
+        panelDTPegawai.setPreferredSize(new java.awt.Dimension(1020, 345));
+        panelDTPegawai.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        listBukuText3.setFont(new CustomFont().getFont("bahnschrift", 24));
+        listBukuText3.setForeground(new java.awt.Color(255, 255, 255));
+        listBukuText3.setText("Informasi Pegawai");
+        panelDTPegawai.add(listBukuText3, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 40, -1, -1));
+
+        tf_alamatPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        tf_alamatPegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        tf_alamatPegawai.setForeground(new java.awt.Color(255, 255, 255));
+        tf_alamatPegawai.setText("Alamat Pegawai");
+        tf_alamatPegawai.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Alamat", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Bahnschrift", 0, 14), new java.awt.Color(255, 255, 255))); // NOI18N
+        tf_alamatPegawai.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        tf_alamatPegawai.setEnabled(false);
+        tf_alamatPegawai.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        panelDTPegawai.add(tf_alamatPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 180, 280, 60));
+
+        tf_notelpPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        tf_notelpPegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        tf_notelpPegawai.setForeground(new java.awt.Color(255, 255, 255));
+        tf_notelpPegawai.setText("Nomor Telepon");
+        tf_notelpPegawai.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "No. Telepon", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Bahnschrift", 0, 14), new java.awt.Color(255, 255, 255))); // NOI18N
+        tf_notelpPegawai.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        tf_notelpPegawai.setEnabled(false);
+        tf_notelpPegawai.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        panelDTPegawai.add(tf_notelpPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 90, 280, 60));
+
+        jTextField1.setBackground(new java.awt.Color(65, 65, 65));
+        jTextField1.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
+        jTextField1.setForeground(new java.awt.Color(255, 255, 255));
+        jTextField1.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        jTextField1.setText("Shif");
+        jTextField1.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        panelDTPegawai.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 175, 35, 20));
+
+        jPanel2.setBackground(new java.awt.Color(65, 65, 65));
+        jPanel2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
+        jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        rb_pagi.setBackground(new java.awt.Color(65, 65, 65));
+        btnGroupShif.add(rb_pagi);
+        rb_pagi.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        rb_pagi.setForeground(new java.awt.Color(255, 255, 255));
+        rb_pagi.setText("Pagi");
+        rb_pagi.setEnabled(false);
+        jPanel2.add(rb_pagi, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 130, 40));
+
+        rb_sore.setBackground(new java.awt.Color(65, 65, 65));
+        btnGroupShif.add(rb_sore);
+        rb_sore.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        rb_sore.setForeground(new java.awt.Color(255, 255, 255));
+        rb_sore.setText("Sore");
+        rb_sore.setEnabled(false);
+        jPanel2.add(rb_sore, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 10, 130, 40));
+
+        panelDTPegawai.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 185, 280, 55));
+
+        tf_namaPegawai.setBackground(new java.awt.Color(65, 65, 65));
+        tf_namaPegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        tf_namaPegawai.setForeground(new java.awt.Color(255, 255, 255));
+        tf_namaPegawai.setText("Nama Pegawai");
+        tf_namaPegawai.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Nama", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Bahnschrift", 0, 14), new java.awt.Color(255, 255, 255))); // NOI18N
+        tf_namaPegawai.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        tf_namaPegawai.setEnabled(false);
+        tf_namaPegawai.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        panelDTPegawai.add(tf_namaPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 90, 280, 60));
+
+        tf_unamePegawai.setBackground(new java.awt.Color(65, 65, 65));
+        tf_unamePegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        tf_unamePegawai.setForeground(new java.awt.Color(255, 255, 255));
+        tf_unamePegawai.setText("Username");
+        tf_unamePegawai.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Username", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Bahnschrift", 0, 14), new java.awt.Color(255, 255, 255))); // NOI18N
+        tf_unamePegawai.setDisabledTextColor(new java.awt.Color(200, 200, 200));
+        tf_unamePegawai.setEnabled(false);
+        tf_unamePegawai.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        panelDTPegawai.add(tf_unamePegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(710, 90, 280, 60));
+
+        jTextField2.setBackground(new java.awt.Color(65, 65, 65));
+        jTextField2.setFont(new java.awt.Font("Bahnschrift", 0, 14)); // NOI18N
+        jTextField2.setForeground(new java.awt.Color(255, 102, 102));
+        jTextField2.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        jTextField2.setText("Akses");
+        jTextField2.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        panelDTPegawai.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 175, 50, 20));
+
+        jPanel3.setBackground(new java.awt.Color(65, 65, 65));
+        jPanel3.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 51, 51), 1, true));
+        jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        rb_admin.setBackground(new java.awt.Color(65, 65, 65));
+        btnGroupAkses.add(rb_admin);
+        rb_admin.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        rb_admin.setForeground(new java.awt.Color(255, 255, 255));
+        rb_admin.setText("Admin");
+        rb_admin.setEnabled(false);
+        jPanel3.add(rb_admin, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 130, 40));
+
+        rb_kasir.setBackground(new java.awt.Color(65, 65, 65));
+        btnGroupAkses.add(rb_kasir);
+        rb_kasir.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        rb_kasir.setForeground(new java.awt.Color(255, 255, 255));
+        rb_kasir.setText("Kasir");
+        rb_kasir.setEnabled(false);
+        jPanel3.add(rb_kasir, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 10, 130, 40));
+
+        panelDTPegawai.add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(710, 185, 280, 55));
+
+        btnHapusPegawai.setBackground(new java.awt.Color(255, 51, 51));
+        btnHapusPegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        btnHapusPegawai.setForeground(new java.awt.Color(255, 255, 255));
+        btnHapusPegawai.setText("HAPUS");
+        btnHapusPegawai.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnHapusPegawaiActionPerformed(evt);
+            }
+        });
+        panelDTPegawai.add(btnHapusPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 280, 110, 40));
+
+        btnEditPassword.setBackground(new java.awt.Color(102, 102, 102));
+        btnEditPassword.setFont(new java.awt.Font("Bahnschrift", 0, 12)); // NOI18N
+        btnEditPassword.setForeground(new java.awt.Color(255, 255, 255));
+        btnEditPassword.setText("<html><center>UBAH<br>PASSWORD</center></html>");
+        btnEditPassword.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEditPasswordActionPerformed(evt);
+            }
+        });
+        panelDTPegawai.add(btnEditPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 280, 120, 40));
+        btnEditPassword.setVisible(false);
+
+        btnEditPegawai.setBackground(new java.awt.Color(51, 180, 51));
+        btnEditPegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        btnEditPegawai.setForeground(new java.awt.Color(255, 255, 255));
+        btnEditPegawai.setText("EDIT");
+        btnEditPegawai.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEditPegawaiActionPerformed(evt);
+            }
+        });
+        panelDTPegawai.add(btnEditPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(880, 280, 110, 40));
+
+        labelIDPegawai.setForeground(new java.awt.Color(65, 65, 65));
+        labelIDPegawai.setText("idpegawai");
+        panelDTPegawai.add(labelIDPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(950, 20, -1, -1));
+
+        panelEditPegawai.add(panelDTPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 235, 1020, 340));
+
+        tabPegawai.add(panelEditPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 90, 1040, 585));
+
+        btnTambahPegawai.setBackground(new java.awt.Color(90, 90, 90));
+        btnTambahPegawai.setFont(new java.awt.Font("Bahnschrift", 0, 18)); // NOI18N
+        btnTambahPegawai.setForeground(new java.awt.Color(255, 255, 255));
+        btnTambahPegawai.setText("TAMBAH");
+        btnTambahPegawai.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnTambahPegawaiActionPerformed(evt);
+            }
+        });
+        tabPegawai.add(btnTambahPegawai, new org.netbeans.lib.awtextra.AbsoluteConstraints(900, 25, 110, 40));
+
+        tabbedPanel.addTab("  Pegawai Kasir  ", tabPegawai);
+
         basePanel.add(tabbedPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 0, 1050, 708));
         tabbedPanel.getAccessibleContext().setAccessibleName("tabDashboard");
 
@@ -1260,6 +1924,11 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         ubahProfilButton.setForeground(new java.awt.Color(255, 255, 255));
         ubahProfilButton.setText("UBAH PROFILE");
         ubahProfilButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        ubahProfilButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ubahProfilButtonActionPerformed(evt);
+            }
+        });
         leftPanel.add(ubahProfilButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 563, 190, 50));
 
         logoutButton.setBackground(new java.awt.Color(51, 51, 51));
@@ -1338,7 +2007,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         this.dispose();
         login.setVisible(true);
         try {
-            PREFS.clear();
+            PreferencedHelper.clear();
         } catch (BackingStoreException ex) {
             System.out.println("Error BackingStoreException: " + ex);
         }
@@ -1411,10 +2080,12 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                 break;
             case 2:
                 title = "K-SIR Book: Data Transaksi";
-
                 break;
             case 3:
                 title = "K-SIR Book: Data Pelanggan";
+                break;
+            case 4:
+                title = "K-SIR Book: Data Pegawai Kasir";
                 break;
             default:
                 title = "K-SIR Book";
@@ -1423,7 +2094,13 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             @Override
             public void run() {
                 setTitle(title);
-                setCBpelanggan();
+                if (listPelanggans.size() > 0) {
+                    listPelanggans.forEach((l) -> {
+                        if (!arrayPelanggans.contains(l.getNama_pelanggan())) {
+                            setCBpelanggan();
+                        }
+                    });
+                }
                 textTitleBar.setText(title);
             }
         };
@@ -1521,7 +2198,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                         });
                         // cek nama pelanggan terdapat di daftar pelanggan
                         if (trx.getIdPelanggan() > 0) {
-                            trx.setIdPetugas(PREFS.getId());
+                            trx.setIdPetugas(PreferencedHelper.getId());
                             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
                             Date now = new Date();
                             trx.setTanggal(formatter.format(now));
@@ -1549,8 +2226,9 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                                             System.out.println(i + ". Error: " + ex.getMessage());
                                         }
                                     }
+                                    indexDetailTrx = 0;
                                     jOpt.displayInfo(panelTambahTransaksi, "Berhasil menambahkan transaksi!", "Sukses!");
-                                    trx.setNamaPetugas(PREFS.getName());
+                                    trx.setNamaPetugas(PreferencedHelper.getName());
                                     trx.setTotalBayar(total);
                                     buttonResetActionPerformed(evt);
                                     setInfoTambahTrx();
@@ -1598,6 +2276,332 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private void buttonAddItemMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_buttonAddItemMouseExited
         SwingUtilities.updateComponentTreeUI(panelTambahTransaksi);
     }//GEN-LAST:event_buttonAddItemMouseExited
+
+    private void btnHapusPegawaiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusPegawaiActionPerformed
+        CustomJPanelView jOpt = new CustomJPanelView();
+        jOpt.setPanel("black");
+        int aksi = jOpt.displayConfirmDialog(panelDTPegawai, "Apakah anda ingin menghapus " + tf_namaPegawai.getText() + " dari daftar pelanggan?", "Konfirmasi");
+        switch (aksi) {
+            case 0: {
+                Thread t = new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            pegawai.delete(listPegawais.get(Integer.parseInt(labelIDPegawai.getText())));
+                            panelListPegawai.remove(Integer.parseInt(labelIDPegawai.getText()));
+                            panelDTPegawai.setVisible(false);
+                            SwingUtilities.updateComponentTreeUI(tabPegawai);
+                        } catch (SQLException ex) {
+                            System.out.println(labelIDPegawai.getText() + " - " + listPegawais.get(Integer.parseInt(labelIDPegawai.getText())).getNama());
+                            jOpt.setPanel("black");
+                            jOpt.displayWarning(tabPegawai, "Gagal menghapus pegawai!", "Gagal");
+                            System.out.println(ex.getErrorCode() + " : " + ex.getMessage());
+                        }
+                    }
+                };
+                t.start();
+                break;
+            }
+        }
+    }//GEN-LAST:event_btnHapusPegawaiActionPerformed
+
+    private void btnEditPegawaiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditPegawaiActionPerformed
+        if (btnEditPegawai.getText().equalsIgnoreCase("edit")) {
+            // Change TextField Enable
+            btnEditPegawai.setText("SIMPAN");
+            tf_namaPegawai.setEnabled(true);
+            tf_alamatPegawai.setEnabled(true);
+            tf_notelpPegawai.setEnabled(true);
+            tf_unamePegawai.setEnabled(true);
+            rb_pagi.setEnabled(true);
+            rb_sore.setEnabled(true);
+            rb_admin.setEnabled(true);
+            rb_kasir.setEnabled(true);
+            btnEditPassword.setVisible(true);
+            ChangePasswordPanel.setImpl(pegawai);
+        } else if (btnEditPegawai.getText().equalsIgnoreCase("simpan")) {
+            Pegawai oldP = pegawai.listPegawais.get(Integer.parseInt(labelIDPegawai.getText()));
+            Pegawai newP = new Pegawai();
+            newP.setIdKasir(oldP.getIdKasir());
+            newP.setNama(tf_namaPegawai.getText());
+            newP.setAlamat(tf_alamatPegawai.getText());
+            newP.setTelepon(tf_notelpPegawai.getText());
+            String shif = rb_pagi.isSelected() ? "Pagi" : "Sore";
+            newP.setShif(shif);
+            newP.setUsername(tf_unamePegawai.getText());
+            newP.setPassword(oldP.getPassword());
+            newP.setSalt(oldP.getSalt());
+            String akses = rb_admin.isSelected() ? "admin" : "kasir";
+            newP.setAkses(akses);
+
+            boolean same = oldP.getIdKasir() == newP.getIdKasir()
+                    && oldP.getNama().equals(newP.getNama())
+                    && oldP.getAlamat().equals(newP.getAlamat())
+                    && oldP.getTelepon().equals(newP.getTelepon())
+                    && oldP.getUsername().equals(newP.getUsername())
+                    && oldP.getAkses().equals(newP.getAkses())
+                    && oldP.getPassword().equals(newP.getPassword())
+                    && oldP.getShif().equals(newP.getShif())
+                    && oldP.getSalt().equals(newP.getSalt());
+
+            if (!same) {
+                try {
+                    pegawai.update(newP);
+                    loadDataPegawai();
+                    SwingUtilities.updateComponentTreeUI(tabPegawai);
+                } catch (SQLException ex) {
+                    Logger.getLogger(DashboardPegawaiView.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            // Change TextField Enable
+            btnEditPegawai.setText("EDIT");
+            tf_namaPegawai.setEnabled(false);
+            tf_alamatPegawai.setEnabled(false);
+            tf_notelpPegawai.setEnabled(false);
+            tf_unamePegawai.setEnabled(false);
+            rb_pagi.setEnabled(false);
+            rb_sore.setEnabled(false);
+            rb_admin.setEnabled(false);
+            rb_kasir.setEnabled(false);
+            btnEditPassword.setVisible(false);
+        }
+    }//GEN-LAST:event_btnEditPegawaiActionPerformed
+
+    private void btnEditPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditPasswordActionPerformed
+        ChangePasswordPanel.display(listPegawais.get(Integer.parseInt(labelIDPegawai.getText())));
+    }//GEN-LAST:event_btnEditPasswordActionPerformed
+
+    /**
+     * Variabel untuk menyimpan salt milik pegawai baru
+     */
+    private String newSalt = "";
+
+    private void btnTambahPegawaiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTambahPegawaiActionPerformed
+        if (btnTambahPegawai.getText().equalsIgnoreCase("tambah")) {
+            btnTambahPegawai.setText("BATAL");
+            newSalt = PasswordUtils.getSalt(32);
+            labelIDPegawai.setText(String.valueOf(listPegawais.get(listPegawais.size() - 1).getIdKasir() + 1));
+            System.out.println(String.valueOf(listPegawais.get(listPegawais.size() - 1).getIdKasir() + 1));
+            panelEditPegawai.setVisible(false);
+            panelTambahPegawai.setVisible(true);
+        } else {
+            btnTambahPegawai.setText("TAMBAH");
+            panelTambahPegawai.setVisible(false);
+            panelEditPegawai.setVisible(true);
+        }
+    }//GEN-LAST:event_btnTambahPegawaiActionPerformed
+
+    /**
+     * Algorithm to generate random password
+     *
+     * @param evt
+     */
+    private void btnGeneratePassActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGeneratePassActionPerformed
+        Random random = new SecureRandom();
+        String angka = "0123456789";
+        String hurufB = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String hurufK = "abcdefghijklmnopqrstuvwxyz";
+        String simbol = "#?!@$ %^&*-";
+        int iterasi = 15;
+        StringBuilder pass = new StringBuilder(10);
+        for (int i = 0; i < iterasi; i++) {
+            pass.append(angka.charAt(random.nextInt(angka.length())));
+            pass.append(hurufB.charAt(random.nextInt(angka.length())));
+            pass.append(hurufK.charAt(random.nextInt(angka.length())));
+            pass.append(simbol.charAt(random.nextInt(angka.length())));
+        }
+        String list = String.valueOf(pass);
+        pass = new StringBuilder(10);
+        for (int i = 0; i < 10; i++) {
+            pass.append(list.charAt(random.nextInt(list.length())));
+        }
+        tf_generatePassword.setText(String.valueOf(pass));
+    }//GEN-LAST:event_btnGeneratePassActionPerformed
+
+    /**
+     * Feature to copy text from JTextField to clipboard
+     *
+     * @param evt
+     */
+    private void btnCopyGeneratePassActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCopyGeneratePassActionPerformed
+        if (!tf_generatePassword.getText().isEmpty()) {
+            StringSelection textToCopy = new StringSelection(tf_generatePassword.getText());
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(textToCopy, null);
+        } else {
+            CustomJPanelView jOpt = new CustomJPanelView();
+            jOpt.setPanel("black");
+            jOpt.displayError(panelTools, "Harap klik tombol\ngenerate password\nterlebih dahulu!", "Gagal!");
+        }
+    }//GEN-LAST:event_btnCopyGeneratePassActionPerformed
+
+    /**
+     * Feature to show/hide password in JPasswordField <code>jpf_newPass</code>
+     *
+     * @param evt
+     */
+    private void btnShowPwdActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowPwdActionPerformed
+        if (btnShowPwd.getText().equalsIgnoreCase("show")) {
+            btnShowPwd.setText("HIDE");
+            jpf_newPass.setEchoChar((char) 0);
+        } else {
+            btnShowPwd.setText("SHOW");
+            jpf_newPass.setEchoChar('\u25cf');
+        }
+    }//GEN-LAST:event_btnShowPwdActionPerformed
+
+    /**
+     * Feature to show/hide password in JPasswordField <code>jpf_newUpass</code>
+     *
+     * @param evt
+     */
+    private void btnShowUpwdActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowUpwdActionPerformed
+        if (btnShowUpwd.getText().equalsIgnoreCase("show")) {
+            btnShowUpwd.setText("HIDE");
+            jpf_newUpass.setEchoChar((char) 0);
+        } else {
+            btnShowUpwd.setText("SHOW");
+            jpf_newUpass.setEchoChar('\u25cf');
+        }
+    }//GEN-LAST:event_btnShowUpwdActionPerformed
+
+    /**
+     * Feature for reset form in panelTambahPegawai
+     *
+     * @param evt
+     */
+    private void btnResetNewPegawaiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetNewPegawaiActionPerformed
+        CustomJPanelView jOpt = new CustomJPanelView();
+        jOpt.setPanel("black");
+        int aksi = jOpt.displayConfirmDialog(panelTambahPegawai, "Apakah anda yakin\ningin mengatur ulang form\nyang sudah anda isikan?", "Konfirmasi");
+        switch (aksi) {
+            case 0: //yes option
+            {
+                tf_newNamaPegawai.setText("");
+                tf_newAlamatPegawai.setText("");
+                tf_newNotelpPegawai.setText("");
+                tf_newUnamePegawai.setText("");
+                jpf_newPass.setText("");
+                jpf_newUpass.setText("");
+                tf_generatePassword.setText("");
+                btnGroupNewShif.clearSelection();
+                btnGroupNewAkses.clearSelection();
+                break;
+            }
+            default:
+            //nothing
+        }
+    }//GEN-LAST:event_btnResetNewPegawaiActionPerformed
+
+    boolean cekUname;
+    boolean cekPass;
+    boolean cekUpass = false;
+
+    /**
+     * Aksi ketika tombol tambahkan pegawai diklik
+     *
+     * @param evt
+     */
+    private void btnTambahkanPegawaiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTambahkanPegawaiActionPerformed
+        boolean npIsEmpty = tf_newNamaPegawai.getText().isEmpty();
+        labelWarningNama.setVisible(npIsEmpty);
+        boolean apIsEmpty = tf_newAlamatPegawai.getText().isEmpty();
+        labelWarningAlamat.setVisible(apIsEmpty);
+        boolean tpIsEmpty = tf_newNotelpPegawai.getText().isEmpty();
+        labelWarningNoTelp.setVisible(tpIsEmpty);
+        boolean unIsEmpty = tf_newUnamePegawai.getText().isEmpty();
+        labelWarningUN.setVisible(unIsEmpty);
+        boolean pwIsEmpty = jpf_newPass.getPassword().length == 0;
+        labelWarningPW.setVisible(pwIsEmpty);
+        boolean upIsEmpty = jpf_newUpass.getPassword().length == 0;
+        labelWarningUPW.setVisible(upIsEmpty);
+        boolean akIsEmpty = !(rb_newAdmin.isSelected() || rb_newKasir.isSelected());
+        labelWarningAkses.setVisible(akIsEmpty);
+        boolean shIsEmpty = !(rb_newPagi.isSelected() || rb_newSore.isSelected());
+        labelWarningShif.setVisible(shIsEmpty);
+
+        boolean checkAllisEmpty = npIsEmpty || apIsEmpty || tpIsEmpty || unIsEmpty || pwIsEmpty || upIsEmpty || akIsEmpty || shIsEmpty;
+
+        if (!checkAllisEmpty) {
+            CustomJPanelView jOpt = new CustomJPanelView();
+            jOpt.setPanel("black");
+            if (!cekUname && !cekPass && cekUpass) {
+                Pegawai newPegawai = new Pegawai();
+                newPegawai.setIdKasir(Integer.valueOf(labelIDPegawai.getText()));
+                newPegawai.setNama(tf_newNamaPegawai.getText());
+                newPegawai.setAlamat(tf_newAlamatPegawai.getText());
+                newPegawai.setTelepon(tf_newNotelpPegawai.getText());
+                String shif = rb_newPagi.isSelected() ? "Pagi" : "Sore";
+                newPegawai.setShif(shif);
+                String akses = rb_newAdmin.isSelected() ? "admin" : "kasir";
+                newPegawai.setAkses(akses);
+                newPegawai.setUsername(tf_newUnamePegawai.getText());
+                String securePassword = PasswordUtils.generateSecurePassword(String.valueOf(jpf_newPass.getPassword()), newSalt);
+                newPegawai.setPassword(securePassword);
+                newPegawai.setSalt(newSalt);
+
+                try {
+                    pegawai.insert(newPegawai);
+                    jOpt.displayInfo(panelTambahPegawai, "Sukses menambah pegawai", "Sukses");
+
+                    tf_newNamaPegawai.setText("");
+                    tf_newAlamatPegawai.setText("");
+                    tf_newNotelpPegawai.setText("");
+                    tf_newUnamePegawai.setText("");
+                    jpf_newPass.setText("");
+                    jpf_newUpass.setText("");
+                    tf_generatePassword.setText("");
+                    btnGroupNewShif.clearSelection();
+                    btnGroupNewAkses.clearSelection();
+                    
+                    btnTambahPegawaiActionPerformed(evt);
+                    loadDataPegawai();
+
+                } catch (SQLException ex) {
+                    jOpt.displayError(panelTambahPegawai, "Gagal Menambah Pegawai!", "Error");
+                    System.out.println("Error : " + ex.getMessage());
+                }
+            }
+        }
+    }//GEN-LAST:event_btnTambahkanPegawaiActionPerformed
+
+    private void jpf_newUpassKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jpf_newUpassKeyReleased
+        if (!Arrays.equals(jpf_newPass.getPassword(), jpf_newUpass.getPassword())) {
+            cekUpass = false;
+            labelWarningUpwd.setVisible(true);
+        } else {
+            cekUpass = true;
+            labelWarningUpwd.setVisible(false);
+        }
+    }//GEN-LAST:event_jpf_newUpassKeyReleased
+
+    private void jpf_newPassKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jpf_newPassKeyReleased
+        Pattern pattern = Pattern.compile("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$");
+        Matcher matcher = pattern.matcher(String.valueOf(jpf_newPass.getPassword()));
+        cekPass = !matcher.matches();
+        labelWarningPW.setVisible(false);
+        labelWarningPwd.setVisible(cekPass);
+    }//GEN-LAST:event_jpf_newPassKeyReleased
+
+    private void tf_newUnamePegawaiKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tf_newUnamePegawaiKeyReleased
+        for (Pegawai listPegawai : listPegawais) {
+            if (listPegawai.getUsername().equals(tf_newUnamePegawai.getText())) {
+                cekUname = true;
+                break;
+            }
+            cekUname = false;
+        }
+        labelWarningUN.setVisible(false);
+        labelWarningUname.setVisible(cekUname);
+    }//GEN-LAST:event_tf_newUnamePegawaiKeyReleased
+
+    private void ubahProfilButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ubahProfilButtonActionPerformed
+        UpdateProfilPanel updateProfil = new UpdateProfilPanel(listPegawais.get(PreferencedHelper.getId()-1), pegawai);
+        updateProfil.display();
+        loadDataPegawai();
+        setDataPegawai();
+        SwingUtilities.updateComponentTreeUI(panelDTPegawai);
+    }//GEN-LAST:event_ubahProfilButtonActionPerformed
 
     private void loadDataDetailTransaksi() {
         listDetailTransaksis = detailTrx.listDetailTransaksis;
@@ -1658,6 +2662,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             new DashboardPegawaiView().setVisible(true);
         });
     }
+
     // Get Current Time and Update on Interface every 1 seconds
     private Timer timer;
 
@@ -1721,8 +2726,12 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         arrayPelanggans.clear();
         cb_namaPelanggan.removeAllItems();
         listPelanggans.forEach((p) -> {
-            arrayPelanggans.add(p.getNama_pelanggan());
-            cb_namaPelanggan.addItem(p.getNama_pelanggan());
+            try {
+                arrayPelanggans.add(p.getNama_pelanggan());
+                cb_namaPelanggan.addItem(p.getNama_pelanggan());
+            } catch (NullPointerException ex) {
+                System.out.println("NoData");
+            }
         });
         cb_namaPelanggan.setSelectedIndex(-1);
 
@@ -1741,6 +2750,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                     inputNamaT = true;
                     textField.setText(cb_namaPelanggan.getItemAt(0));
                     cb_namaPelanggan.setPopupVisible(false);
+                    textField.transferFocus();
                 }
             }
         });
@@ -1769,10 +2779,29 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             textField.setText(keyword);
         }
     }
+    
+    private void setDataPegawai() {
+        namaKasirText.setText(PreferencedHelper.getName());
+        noTeleponText.setText(PreferencedHelper.getTel());
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel backgroundPanel;
     private javax.swing.JPanel basePanel;
+    private javax.swing.JButton btnCopyGeneratePass;
+    private javax.swing.JButton btnEditPassword;
+    private javax.swing.JButton btnEditPegawai;
+    private javax.swing.JButton btnGeneratePass;
+    private javax.swing.ButtonGroup btnGroupAkses;
+    private javax.swing.ButtonGroup btnGroupNewAkses;
+    private javax.swing.ButtonGroup btnGroupNewShif;
+    private javax.swing.ButtonGroup btnGroupShif;
+    private javax.swing.JButton btnHapusPegawai;
+    private javax.swing.JButton btnResetNewPegawai;
+    private javax.swing.JButton btnShowPwd;
+    private javax.swing.JButton btnShowUpwd;
+    private javax.swing.JButton btnTambahPegawai;
+    private javax.swing.JButton btnTambahkanPegawai;
     private javax.swing.JButton buttonAddItem;
     private javax.swing.JButton buttonAddTransaksi;
     private javax.swing.JButton buttonPencarian;
@@ -1793,18 +2822,49 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private javax.swing.JTextField headNomor;
     private javax.swing.JPanel headerDaftarBuku;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
+    private javax.swing.JSeparator jSeparator4;
+    private javax.swing.JSeparator jSeparator5;
+    private javax.swing.JTextField jTextField1;
+    private javax.swing.JTextField jTextField2;
+    private javax.swing.JTextField jTextField3;
+    private javax.swing.JTextField jTextField4;
+    private javax.swing.JPasswordField jpf_newPass;
+    private javax.swing.JPasswordField jpf_newUpass;
+    private javax.swing.JLabel labelIDPegawai;
+    private javax.swing.JLabel labelInformasiAkun;
+    private javax.swing.JLabel labelPengaturanAkun;
+    private javax.swing.JLabel labelToolAkun;
+    private javax.swing.JLabel labelWarningAkses;
+    private javax.swing.JLabel labelWarningAlamat;
+    private javax.swing.JLabel labelWarningNama;
+    private javax.swing.JLabel labelWarningNoTelp;
+    private javax.swing.JLabel labelWarningPW;
+    private javax.swing.JLabel labelWarningPwd;
+    private javax.swing.JLabel labelWarningShif;
+    private javax.swing.JLabel labelWarningUN;
+    private javax.swing.JLabel labelWarningUPW;
+    private javax.swing.JLabel labelWarningUname;
+    private javax.swing.JLabel labelWarningUpwd;
     private javax.swing.JPanel leftPanel;
     private javax.swing.JLabel listBukuText;
     private javax.swing.JLabel listBukuText1;
+    private javax.swing.JLabel listBukuText3;
+    private javax.swing.JLabel listPegawaiText;
     private javax.swing.JButton logoutButton;
     private javax.swing.JLabel minimizedIcon;
     private javax.swing.JLabel namaKasirText;
+    private javax.swing.JLabel newNomorPegawai;
     private javax.swing.JLabel noTeleponText;
     private javax.swing.JPanel panelDT;
+    private javax.swing.JPanel panelDTPegawai;
     private javax.swing.JPanel panelDTtambah;
     private javax.swing.JPanel panelDetailTransaksi;
+    private javax.swing.JPanel panelEditPegawai;
     private javax.swing.JPanel panelHeadHarga;
     private javax.swing.JPanel panelHeadHarga1;
     private javax.swing.JPanel panelHeadIsbn;
@@ -1818,18 +2878,32 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private javax.swing.JPanel panelHeaderPelanggan;
     private javax.swing.JPanel panelInfo;
     private javax.swing.JPanel panelListBuku;
+    private javax.swing.JPanel panelListPegawai;
     private javax.swing.JPanel panelListPelanggan;
     private javax.swing.JPanel panelListTransaksi;
     private javax.swing.JPanel panelLoadingBuku;
+    private javax.swing.JPanel panelNewAkses;
+    private javax.swing.JPanel panelNewShif;
     private javax.swing.JPanel panelNoTrx;
     private javax.swing.JPanel panelTableHeader;
     private javax.swing.JPanel panelTableHeaderTambah;
+    private javax.swing.JPanel panelTambahPegawai;
     private javax.swing.JPanel panelTambahPelanggan;
     private javax.swing.JPanel panelTambahTransaksi;
+    private javax.swing.JPanel panelTools;
     private javax.swing.JLabel panelTotalTambah;
     private javax.swing.JPanel panelTransaksi;
     private javax.swing.JLabel pencarianText;
+    private javax.swing.JRadioButton rb_admin;
+    private javax.swing.JRadioButton rb_kasir;
+    private javax.swing.JRadioButton rb_newAdmin;
+    private javax.swing.JRadioButton rb_newKasir;
+    private javax.swing.JRadioButton rb_newPagi;
+    private javax.swing.JRadioButton rb_newSore;
+    private javax.swing.JRadioButton rb_pagi;
+    private javax.swing.JRadioButton rb_sore;
     private javax.swing.JScrollPane scrolPanellListPelanggan;
+    private javax.swing.JScrollPane scrollPaneListlPegawai;
     private javax.swing.JScrollPane scrollPanelDT;
     private javax.swing.JScrollPane scrollPanelDTtambah;
     private javax.swing.JScrollPane scrollPanelListBuku;
@@ -1841,6 +2915,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private javax.swing.JLabel sortingText;
     private javax.swing.JPanel tabDaftarBuku;
     private javax.swing.JPanel tabDashboard;
+    private javax.swing.JPanel tabPegawai;
     private javax.swing.JPanel tabPelanggan;
     private javax.swing.JPanel tabTransaksi;
     private javax.swing.JTabbedPane tabbedPanel;
@@ -1872,12 +2947,21 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
     private javax.swing.JLabel textTotalDT;
     private javax.swing.JLabel textTransaksiPembelian;
     private javax.swing.JLabel textUangTunaiAdd;
+    private javax.swing.JTextField tf_alamatPegawai;
+    private javax.swing.JTextField tf_generatePassword;
+    private javax.swing.JTextField tf_namaPegawai;
     private javax.swing.JTextField tf_newAlamatP;
+    private javax.swing.JTextField tf_newAlamatPegawai;
+    private javax.swing.JTextField tf_newNamaPegawai;
     private javax.swing.JTextField tf_newNamaPelanggan;
     private javax.swing.JTextField tf_newNoTelp;
+    private javax.swing.JTextField tf_newNotelpPegawai;
+    private javax.swing.JTextField tf_newUnamePegawai;
+    private javax.swing.JTextField tf_notelpPegawai;
     private javax.swing.JTextField tf_tanggal;
     private javax.swing.JTextField tf_totalBayar;
     private javax.swing.JTextField tf_uangTunai;
+    private javax.swing.JTextField tf_unamePegawai;
     private javax.swing.JLabel titleText;
     private javax.swing.JButton ubahProfilButton;
     private javax.swing.JLabel versionText;

@@ -14,7 +14,7 @@ import tokobuku.util.Formatter;
  */
 public class DetailTransaksiPanelView {
     
-    private final static Font DEFAULT_FONT = new CustomFont().getFont("Bahnschrift", 14);
+    private final static Font DEFAULT_FONT = CustomFont.getFont("Bahnschrift", 14);
     private final int index;
     private final Formatter<Integer> uang;
     

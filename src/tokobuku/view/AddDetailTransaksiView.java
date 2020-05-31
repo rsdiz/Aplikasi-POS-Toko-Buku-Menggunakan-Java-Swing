@@ -102,7 +102,11 @@ public class AddDetailTransaksiView {
         basePanel.setPreferredSize(new java.awt.Dimension(605, 50));
         basePanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
         // setText
-        tf_isbn.setText(detailTransaksi.getIsbn());
+        if (detailTransaksi.getIsbn().isEmpty()) {
+            tf_isbn.setText("Pilih ISBN");
+        } else {
+            tf_isbn.setText(Formatter.structIsbn(detailTransaksi.getIsbn()));
+        }
         tf_noDetail.setText(String.valueOf(index));
         tf_qty.setText(String.valueOf(detailTransaksi.getBanyak()));
         tf_harga.setText(String.valueOf(detailTransaksi.getHarga()));
@@ -198,7 +202,7 @@ public class AddDetailTransaksiView {
                 deleteItem();
             }
         });
-        
+
         tf_qty.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -239,8 +243,8 @@ public class AddDetailTransaksiView {
     }
 
     /**
-     * Menampilkan dialog peringatan apakah ingin menghapus kolom tersebut
-     * dan juga kode untuk menghapus baris
+     * Menampilkan dialog peringatan apakah ingin menghapus kolom tersebut dan
+     * juga kode untuk menghapus baris
      */
     private void deleteItem() {
         CustomJPanelView jOpt = new CustomJPanelView();
@@ -321,8 +325,8 @@ public class AddDetailTransaksiView {
             cb_isbn.setMaximumRowCount(10);
             cb_isbn.removeAllItems();
             listBukus.forEach((p) -> {
-                listIsbn.add(p.getIsbn());
-                cb_isbn.addItem(p.getIsbn());
+                listIsbn.add(Formatter.structIsbn(p.getIsbn()));
+                cb_isbn.addItem(Formatter.structIsbn(p.getIsbn()));
             });
             cb_isbn.setSelectedIndex(-1);
             cb_isbn.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
@@ -385,7 +389,7 @@ public class AddDetailTransaksiView {
 
             cb_isbn.addActionListener((ActionEvent e) -> {
                 for (Buku bukus : listBukus) {
-                    if (textField.getText().equalsIgnoreCase(bukus.getIsbn())) {
+                    if (Formatter.destructIsbn(textField.getText()).equalsIgnoreCase(bukus.getIsbn())) {
                         buku = bukus;
                         if (bukus.getImage() != null) {
                             imageBuku.setIcon(new ImageIcon(bukus.getImage()));
@@ -401,7 +405,7 @@ public class AddDetailTransaksiView {
 
             buttonSelect.addActionListener((ActionEvent e) -> {
                 tf_isbn.setText(textField.getText());
-                detailImpl.listDetailTransaksis.get(index - 1).setIsbn(textField.getText());
+                detailImpl.listDetailTransaksis.get(index - 1).setIsbn(Formatter.destructIsbn(textField.getText()));
                 dialog.dispose();
             });
 

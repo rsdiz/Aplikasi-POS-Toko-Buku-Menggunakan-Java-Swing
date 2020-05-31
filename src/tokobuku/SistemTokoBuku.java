@@ -35,7 +35,7 @@ public class SistemTokoBuku {
      */
     public static void main(String[] args) {
         if (PreferencedHelper.getLogin()) {
-            DashboardPegawaiView dashboard = new DashboardPegawaiView();
+            DashboardPegawaiView dashboard = DashboardPegawaiView.getInstance();
             dashboard.setVisible(true);
         } else {
             LoginView login = new LoginView();

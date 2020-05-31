@@ -132,7 +132,7 @@ public class DetailTransaksiPanelView {
     private void setTextToComponent() {
         int total = (detailTransaksi.getBanyak() * detailTransaksi.getHarga());
         tf_noDetail.setText(String.valueOf(index));
-        tf_isbn.setText(detailTransaksi.getIsbn());
+        tf_isbn.setText(Formatter.structIsbn(detailTransaksi.getIsbn()));
         tf_qty.setText(String.valueOf(detailTransaksi.getBanyak()));
         tf_harga.setText(uang.rupiah(detailTransaksi.getHarga())+",-");
         tf_total.setText(uang.rupiah(total)+",-");

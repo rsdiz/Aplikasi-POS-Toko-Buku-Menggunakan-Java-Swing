@@ -10,7 +10,7 @@ import tokobuku.model.Buku;
  */
 public interface BukuInterface {
     public void insert(Buku buku) throws SQLException;
-    public void update(Buku buku) throws SQLException;
+    public void update(Buku buku, String isbn_new) throws SQLException;
     public void delete(Buku buku) throws SQLException;
     public List<Buku> searchBuku(String keywords) throws SQLException;
     public List<Buku> loadAll() throws SQLException;

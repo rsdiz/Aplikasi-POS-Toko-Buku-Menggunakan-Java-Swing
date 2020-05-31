@@ -1,5 +1,6 @@
 package tokobuku.impl;
 
+import java.io.ByteArrayInputStream;
 import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,25 +33,28 @@ public class BukuImpl implements BukuInterface {
             ps.setString(6, buku.getTahun());
             ps.setFloat(7, buku.getHarga_pokok());
             ps.setFloat(8, buku.getHarga_jual());
-            ps.setBytes(9, buku.getImage());
+            ps.setBinaryStream(9, new ByteArrayInputStream(buku.getImage()), buku.getImage().length);
+//            ps.setBytes(9, buku.getImage());
             ps.executeUpdate();
         }
     }
 
     @Override
-    public void update(Buku buku) throws SQLException {
-        String sql = "CALL update_buku(?,?,?,?,?,?,?,?,?,?)";
+    public void update(Buku buku, String isbn_new) throws SQLException {
+        String sql = "CALL update_buku(?,?,?,?,?,?,?,?,?,?,?)";
         try (PreparedStatement ps = con.prepareCall(sql)) {
             ps.setString(1, buku.getIsbn());
-            ps.setString(2, buku.getIsbn());
+            ps.setString(2, isbn_new);
             ps.setString(3, buku.getKategori());
             ps.setString(4, buku.getJudul_buku());
             ps.setString(5, buku.getPenulis());
             ps.setString(6, buku.getPenerbit());
             ps.setString(7, buku.getTahun());
-            ps.setFloat(8, buku.getHarga_pokok());
-            ps.setFloat(9, buku.getHarga_jual());
-            ps.setBytes(10, buku.getImage());
+            ps.setInt(8, buku.getStok());
+            ps.setFloat(9, buku.getHarga_pokok());
+            ps.setFloat(10, buku.getHarga_jual());
+            ps.setBinaryStream(11, new ByteArrayInputStream(buku.getImage()), buku.getImage().length);
+//            ps.setBytes(11, buku.getImage());
             ps.executeUpdate();
         }
     }
@@ -104,12 +108,10 @@ public class BukuImpl implements BukuInterface {
     @Override
     public List<Buku> loadAllBy(String type) throws SQLException {
         List<Buku> listBuku = new ArrayList<>();
-        if (
-                "judul_buku".equalsIgnoreCase(type) | 
-                "isbn".equalsIgnoreCase(type) | 
-                "penulis".equalsIgnoreCase(type) | 
-                "penerbit".equalsIgnoreCase(type)
-           ) {
+        if ("judul_buku".equalsIgnoreCase(type)
+                | "isbn".equalsIgnoreCase(type)
+                | "penulis".equalsIgnoreCase(type)
+                | "penerbit".equalsIgnoreCase(type)) {
             try {
                 String sql = "SELECT * FROM data_buku ORDER BY " + type;
                 Statement statement = con.createStatement();
@@ -123,7 +125,7 @@ public class BukuImpl implements BukuInterface {
                 System.out.println("Error Fetching Data Buku!\n" + e);
             }
         } else {
-            
+
         }
         return listBuku;
     }
@@ -141,7 +143,7 @@ public class BukuImpl implements BukuInterface {
         buku.setIsbn(res.getString("isbn"));
         Blob gambarBlob = res.getBlob("gambar");
         if (gambarBlob != null) {
-            byte gambarByte[] = gambarBlob.getBytes(1, (int) gambarBlob.length());
+            byte gambarByte[] = gambarBlob.getBytes(1l, (int) gambarBlob.length());
             buku.setImage(gambarByte);
         } else {
             buku.setImage(null);

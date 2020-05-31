@@ -268,7 +268,7 @@ public class LoginView extends javax.swing.JFrame {
                 case "200":
                     jOpt.displayInfo(this, "Berhasil Login!", "LOGIN");
                     this.setVisible(false);
-                    DashboardPegawaiView dash = new DashboardPegawaiView();
+                    DashboardPegawaiView dash = DashboardPegawaiView.getInstance();
                     this.dispose();
                     dash.setVisible(true);
                     break;

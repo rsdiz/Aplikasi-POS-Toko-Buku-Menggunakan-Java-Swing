@@ -19,6 +19,18 @@ public class KategoriImpl implements KategoriInterface {
     
     private final Connection con = ConnectionUtil.getDB();
     public List<Kategori> listKategoris = new ArrayList<>();
+    
+    public int hitungBuku(int kode_kategori) throws SQLException{
+        String sql = "SELECT total_buku(?) total_buku";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, kode_kategori);
+            ResultSet res = ps.executeQuery();
+            while (res.next()) {
+                return res.getInt("total_buku");
+            }
+        }
+        return 0;
+    }
 
     @Override
     public void insert(Kategori kategori) throws SQLException {
@@ -64,6 +76,7 @@ public class KategoriImpl implements KategoriInterface {
 
     @Override
     public List<Kategori> load() throws SQLException {
+        listKategoris.clear();
         String sql = "SELECT * FROM tb_kategori";
         try (Statement statement = con.createStatement()) {
             ResultSet res = statement.executeQuery(sql);

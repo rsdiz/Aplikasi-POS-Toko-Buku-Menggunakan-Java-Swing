@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -18,7 +20,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
 import org.netbeans.lib.awtextra.AbsoluteLayout;
@@ -53,7 +54,7 @@ public class BookPanelView {
 
     public BookPanelView(BukuImpl bukuImpl, Buku buku) {
         this.bukuImpl = bukuImpl;
-        this.kategoriImpl = new KategoriImpl();
+        this.kategoriImpl = DashboardPegawaiView.getInstance().kategoriImpl;
         this.buku = buku;
         this.intF = new Formatter<>();
         this.judulBukuText = new JLabel();
@@ -71,10 +72,14 @@ public class BookPanelView {
         bookPanel.setForeground(Color.WHITE);
     }
 
-    public void setProperty() throws Exception {
+    public void setProperty() {
         // Set image from db
         if (buku.getImage() != null) {
-            imageBuku = new JLabel(new ImageIcon(Formatter.buffBytes(buku.getImage())));
+            try {
+                imageBuku = new JLabel(new ImageIcon(Formatter.buffBytes(buku.getImage())));
+            } catch (IOException ex) {
+                imageBuku.setIcon(new ImageIcon(getClass().getResource("/tokobuku/images/book.png")));
+            }
         } else {
             imageBuku.setIcon(new javax.swing.ImageIcon(getClass().getResource("/tokobuku/images/book.png")));
         }
@@ -240,12 +245,10 @@ public class BookPanelView {
         cb_kategoriBuku.setEnabled(false);
         cb_kategoriBuku.removeAllItems();
         kategoriImpl.listKategoris.forEach((listKategori) -> {
+            System.out.println(listKategori.getNama_kategori());
             cb_kategoriBuku.addItem(listKategori.getNama_kategori());
-            if (buku.getKategori().equals(listKategori.getNama_kategori())) {
-                cb_kategoriBuku.setSelectedItem(listKategori.getNama_kategori());
-            }
         });
-        cb_kategoriBuku.getEditor().getEditorComponent().setBackground(new java.awt.Color(55, 55, 55));
+        cb_kategoriBuku.setSelectedItem(buku.getKategori());
         panelBuku.add(cb_kategoriBuku, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 190, 270, 40));
 
         JButton btnMoreKategori = new javax.swing.JButton();
@@ -262,6 +265,30 @@ public class BookPanelView {
             @Override
             public void mouseExited(MouseEvent e) {
                 btnMoreKategori.setBackground(new java.awt.Color(65, 65, 65));
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                JDialog dialog = new JDialog();
+                dialog.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        System.out.println("HOLLLLLAAA");
+                        cb_kategoriBuku.removeAllItems();
+                        kategoriImpl.listKategoris.forEach((listKategori) -> {
+                            cb_kategoriBuku.addItem(listKategori.getNama_kategori());
+                        });
+                    }
+                });
+                JOptionPane optionPane = new JOptionPane(new KategoriPanelView(), JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
+                dialog.setTitle("Daftar Kategori");
+                dialog.setBackground(new java.awt.Color(55, 55, 55));
+                dialog.setModal(true);
+                dialog.setLocationByPlatform(true);
+                dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                dialog.setContentPane(optionPane);
+                dialog.pack();
+                dialog.setVisible(true);
             }
         });
         panelBuku.add(btnMoreKategori, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 190, 40, 40));
@@ -308,7 +335,16 @@ public class BookPanelView {
 
         JLabel coverBuku = new javax.swing.JLabel();
         coverBuku.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        coverBuku.setIcon(new javax.swing.ImageIcon(getClass().getResource("/tokobuku/images/book.png"))); // NOI18N
+        if (buku.getImage() != null) {
+            try {
+                coverBuku.setIcon(new ImageIcon(Formatter.buffBytes(buku.getImage())));
+            } catch (IOException ex) {
+                coverBuku.setIcon(new ImageIcon(getClass().getResource("/tokobuku/images/book.png")));
+            }
+        } else {
+            coverBuku.setIcon(new ImageIcon(getClass().getResource("/tokobuku/images/book.png")));
+        }
+//        coverBuku.setIcon(new javax.swing.ImageIcon(getClass().getResource("/tokobuku/images/book.png"))); // NOI18N
         panelCoverBuku.add(coverBuku, new org.netbeans.lib.awtextra.AbsoluteConstraints(15, 15, 110, -1));
 
         JLabel labelStokBuku = new javax.swing.JLabel();

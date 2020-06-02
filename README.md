@@ -1,11 +1,11 @@
-# Toko Buku dengan Sistem Kasir menggunakan Java Swing
+# Aplikasi POS Toko Buku Menggunakan Java Swing
 
 **Tugas Besar** Mata Kuliah _Sistem Basis Data Lanjut Praktikum_
 
 Daftar Menu:
 
  - [x] Login
- - [ ] Dashboard
+ - [x] Dashboard
  - [x] Ubah Profile Pegawai
  - [x] List Buku
   - [x] List Kategori

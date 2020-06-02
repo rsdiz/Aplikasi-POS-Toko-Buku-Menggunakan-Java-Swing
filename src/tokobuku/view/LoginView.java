@@ -157,8 +157,8 @@ public class LoginView extends javax.swing.JFrame {
         fieldUsername.setFont(new CustomFont().getFont("asap", 14)
         );
         fieldUsername.setForeground(new java.awt.Color(51, 51, 51));
-        fieldUsername.setText("Username/Email");
-        fieldUsername.setToolTipText("Masukkan Username / Email");
+        fieldUsername.setText("Username");
+        fieldUsername.setToolTipText("Masukkan Username");
         fieldUsername.setBorder(null);
         fieldUsername.setCaretColor(new java.awt.Color(51, 51, 51));
         fieldUsername.setMargin(new java.awt.Insets(6, 6, 6, 6));

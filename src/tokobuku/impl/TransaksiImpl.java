@@ -72,6 +72,20 @@ public class TransaksiImpl implements TransaksiInterface{
         return listTransaksis;
     }
     
+    public List<Transaksi> loadNew() throws SQLException {
+        List<Transaksi> returnList = new ArrayList<>();
+        String sql = "SELECT * FROM data_transaksi ORDER BY id_transaksi DESC LIMIT 4";
+        try (Statement statement = con.createStatement()) {
+            ResultSet res = statement.executeQuery(sql);
+            while (res.next()) {
+                Transaksi transaksi = new Transaksi();
+                addTransaksiToList(transaksi, res);
+                returnList.add(transaksi);
+            }
+        }
+        return returnList;
+    }
+    
     private void addTransaksiToList(Transaksi transaksi, ResultSet res) throws SQLException {
         transaksi.setId(res.getInt("id_transaksi"));
         transaksi.setIdPelanggan(res.getInt("id_pelanggan"));

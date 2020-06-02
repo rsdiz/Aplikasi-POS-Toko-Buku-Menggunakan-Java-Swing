@@ -6,6 +6,8 @@ import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -151,7 +153,11 @@ public class TransaksiPanelView {
         // set Number
         number.setText(String.valueOf(index));
         // set Tanggal
-        tanggal.setText(transaksi.getTanggal());
+        try {
+            Date date1 = new SimpleDateFormat("yyyy-MM-dd").parse(transaksi.getTanggal());
+            tanggal.setText(String.valueOf(new Formatter<>().tanggal(date1)));
+        } catch (ParseException ex) {
+        }
         // set Nama Pembeli
         namaPembeli.setText(transaksi.getNamaPelanggan());
     }

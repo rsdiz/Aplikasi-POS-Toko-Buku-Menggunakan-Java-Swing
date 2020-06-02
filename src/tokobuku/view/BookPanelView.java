@@ -245,7 +245,6 @@ public class BookPanelView {
         cb_kategoriBuku.setEnabled(false);
         cb_kategoriBuku.removeAllItems();
         kategoriImpl.listKategoris.forEach((listKategori) -> {
-            System.out.println(listKategori.getNama_kategori());
             cb_kategoriBuku.addItem(listKategori.getNama_kategori());
         });
         cb_kategoriBuku.setSelectedItem(buku.getKategori());
@@ -273,7 +272,6 @@ public class BookPanelView {
                 dialog.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
-                        System.out.println("HOLLLLLAAA");
                         cb_kategoriBuku.removeAllItems();
                         kategoriImpl.listKategoris.forEach((listKategori) -> {
                             cb_kategoriBuku.addItem(listKategori.getNama_kategori());

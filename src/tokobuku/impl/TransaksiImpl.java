@@ -5,11 +5,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import tokobuku.interf.TransaksiInterface;
 import tokobuku.model.Transaksi;
 import tokobuku.util.ConnectionUtil;
+import tokobuku.util.Formatter;
 
 /**
  *
@@ -70,6 +74,18 @@ public class TransaksiImpl implements TransaksiInterface{
             }
         }
         return listTransaksis;
+    }
+    
+    public int countTransaksiToday() {
+        int returnValue = 0;
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", new Locale("id"));
+        String today = formatter.format(new Date());
+        for (Transaksi trx : listTransaksis) {
+            if (trx.getTanggal().equalsIgnoreCase(today)) {
+                returnValue++;
+            }
+        }
+        return returnValue;
     }
     
     public List<Transaksi> loadNew() throws SQLException {

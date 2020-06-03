@@ -40,6 +40,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
+import tokobuku.SistemTokoBuku;
 import tokobuku.impl.BukuImpl;
 import tokobuku.impl.DetailTransaksiImpl;
 import tokobuku.impl.KategoriImpl;
@@ -84,6 +85,8 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
 
     private int totalBuku = 0;
     private int totalTransaksi = 0;
+    private int totalTransaksiNew = 0;
+    private int totalTransaksiToday = 0;
     private int totalPelanggan = 0;
     private int totalPegawai = 0;
 
@@ -275,7 +278,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             });
             SwingUtilities.updateComponentTreeUI(tabDaftarBuku);
         } catch (SQLException ex) {
-            System.out.println("Error Fetching Data Kategori!");
+            SistemTokoBuku.logger.warning(ex.getMessage());
         }
     }
 
@@ -311,7 +314,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                     }
                     totalBuku = listBuku.size();
                 } catch (SQLException ex) {
-                    System.out.println("Error Fetching Data Buku!");
+                    SistemTokoBuku.logger.warning(ex.getMessage());
                 }
                 setListBukuPanel();
                 panelLoadingBuku.setVisible(false);
@@ -338,7 +341,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                     listBuku = buku.searchBuku(keywords);
                     totalBuku = listBuku.size();
                 } catch (SQLException ex) {
-                    System.out.println("Error Fetching Data Buku!");
+                    SistemTokoBuku.logger.warning(ex.getMessage());
                 }
                 setListBukuPanel();
                 panelLoadingBuku.setVisible(false);
@@ -386,8 +389,8 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
         try {
             transaksi.listTransaksis = new ArrayList<>();
             listTransaksi = transaksi.load();
-        } catch (SQLException e) {
-            System.out.println("Error Fetching Data Transaksi!");
+        } catch (SQLException ex) {
+            SistemTokoBuku.logger.warning(ex.getMessage());
         }
     }
 
@@ -437,8 +440,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             pelanggan.listPelanggans = new ArrayList<>();
             listPelanggans = pelanggan.load();
         } catch (SQLException ex) {
-            System.out.println("Gagal menyinkronkan data pelanggan!\n"
-                    + "Error: " + ex.getMessage());
+            SistemTokoBuku.logger.warning(ex.getMessage());
         }
     }
 
@@ -486,8 +488,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             pegawai.listPegawais = new ArrayList<>();
             listPegawais = pegawai.load();
         } catch (SQLException ex) {
-            System.out.println("Gagal menyinkronkan data pegawai!\n"
-                    + "Error: " + ex.getMessage());
+            SistemTokoBuku.logger.warning(ex.getMessage());
         }
     }
 
@@ -541,33 +542,35 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             try {
                 listNewTransaksi = transaksi.loadNew();
                 totalBuku = listBuku.size();
-                totalTransaksi = listTransaksi.size();
+                totalTransaksiToday = transaksi.countTransaksiToday();
+                totalTransaksiNew = listNewTransaksi.size();
                 totalPelanggan = listPelanggans.size();
             } catch (SQLException ex) {
-                System.out.println("Error Fetching data Last Transaksi!");
+                SistemTokoBuku.logger.warning(ex.getMessage());
             }
             setDataDashboard();
         };
-        sync = new Timer(1000, runnable);
+        sync = new Timer(2000, runnable);
         sync.start();
     }
 
     private synchronized void setDataDashboard() {
         panelTransaksiTerbaru.removeAll();
-        panelTransaksiTerbaru.setLayout(new GridLayout(4, 1, 0, 5));
-        if (totalTransaksi < 4) {
-            panelTransaksiTerbaru.setPreferredSize(new Dimension(940, (totalTransaksi * 55)));
+        panelTransaksiTerbaru.setLayout(new GridLayout(totalTransaksiNew, 1, 0, 5));
+        if (totalTransaksiNew < 4) {
+            panelTransaksiTerbaru.setPreferredSize(new Dimension(940, (totalTransaksiNew * 55)));
         } else {
             panelTransaksiTerbaru.setPreferredSize(new Dimension(940, 215));
         }
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < totalTransaksiNew; i++) {
             NewTransaksiPanelView newTransaksiPanelView = new NewTransaksiPanelView(listNewTransaksi.get(i), i + 1);
             newTransaksiPanelView.apply(panelTransaksiTerbaru);
         }
         labelTotalBuku.setText(String.valueOf(totalBuku));
         labelTotalPelanggan.setText(String.valueOf(totalPelanggan));
-        labelTotalTrx.setText(String.valueOf(totalTransaksi));
+        labelTotalTrx.setText(String.valueOf(totalTransaksiToday));
+        
         SwingUtilities.updateComponentTreeUI(tabDashboard);
     }
 
@@ -1009,7 +1012,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
 
         panelTransaksiTerbaru.setBackground(new java.awt.Color(55, 55, 55));
         panelTransaksiTerbaru.setPreferredSize(new java.awt.Dimension(940, 215));
-        panelTransaksiTerbaru.setLayout(new java.awt.GridLayout());
+        panelTransaksiTerbaru.setLayout(new java.awt.GridLayout(1, 0));
         basePanelTransaksiTerbaru.add(panelTransaksiTerbaru, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 60, -1, -1));
 
         tabDashboard.add(basePanelTransaksiTerbaru, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 360, 950, 280));
@@ -2555,7 +2558,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
             PreferencedHelper.clear();
             destroyInstance();
         } catch (BackingStoreException ex) {
-            System.out.println("Error BackingStoreException: " + ex);
+            SistemTokoBuku.logger.warning(ex.getMessage());
         }
     }//GEN-LAST:event_logoutButtonActionPerformed
 
@@ -2770,7 +2773,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                                         try { // Memasukkan data detail transaksi ke list dan database
                                             detailTrx.insert(dtrx);
                                         } catch (SQLException ex) {
-                                            System.out.println(i + ". Error: " + ex.getMessage());
+                                            SistemTokoBuku.logger.warning(ex.getMessage());
                                         }
                                     }
                                     indexDetailTrx = 0;
@@ -2784,7 +2787,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                                     jOpt.displayError(panelTambahTransaksi, "Terdapat daftar item yang masih kosong,\nSilahkan isi atau hapus item dari daftar!", "Item belum lengkap!");
                                 }
                             } catch (SQLException ex) {
-                                System.out.println("Error: " + ex.getMessage());
+                                SistemTokoBuku.logger.warning(ex.getMessage());
                             }
                         } else {
                             int aksi = jOpt.displayConfirmDialog(panelTambahTransaksi, "Nama Pelanggan belum terdaftar pada daftar,\ntambahkan sekarang?", "Nama Pelanggan belum terdaftar!");
@@ -2842,7 +2845,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                         } catch (SQLException ex) {
                             jOpt.setPanel("black");
                             jOpt.displayWarning(tabPegawai, "Gagal menghapus pegawai!", "Gagal");
-                            System.out.println(ex.getErrorCode() + " : " + ex.getMessage());
+                            SistemTokoBuku.logger.warning(ex.getMessage());
                         }
                     }
                 };
@@ -3105,7 +3108,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
 
                 } catch (SQLException ex) {
                     jOpt.displayError(panelTambahPegawai, "Gagal Menambah Pegawai!", "Error");
-                    System.out.println("Error : " + ex.getMessage());
+                    SistemTokoBuku.logger.warning(ex.getMessage());
                 }
             }
         }
@@ -3213,9 +3216,9 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                 Image image = ii.getImage().getScaledInstance(ii.getIconWidth() * f, ii.getIconHeight() * f, Image.SCALE_SMOOTH);
                 newCoverBuku.setIcon(new ImageIcon(image));
             } catch (FileNotFoundException ex) {
-                System.out.println("Error (FileNotFound): " + ex.getMessage());
+                SistemTokoBuku.logger.warning(ex.getMessage());
             } catch (IOException ex) {
-                System.out.println("Error (IO): " + ex.getMessage());
+                SistemTokoBuku.logger.warning(ex.getMessage());
             }
         }
     }//GEN-LAST:event_btnSelectCoverBukuActionPerformed
@@ -3463,7 +3466,7 @@ public class DashboardPegawaiView extends javax.swing.JFrame {
                 arrayPelanggans.add(p.getNama_pelanggan());
                 cb_namaPelanggan.addItem(p.getNama_pelanggan());
             } catch (NullPointerException ex) {
-                System.out.println("NoData");
+                SistemTokoBuku.logger.warning(ex.getMessage());
             }
         });
         cb_namaPelanggan.setSelectedIndex(-1);

@@ -15,6 +15,8 @@
  */
 package tokobuku;
 
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 import tokobuku.util.PreferencedHelper;
 import tokobuku.view.DashboardPegawaiView;
 import tokobuku.view.LoginView;
@@ -29,6 +31,8 @@ import tokobuku.view.LoginView;
  * @version 1.0
  */
 public class SistemTokoBuku {
+    
+    public static final Logger logger = LogManager.getLogManager().getLogger(SistemTokoBuku.class.getName());
 
     /**
      * @param args the command line arguments

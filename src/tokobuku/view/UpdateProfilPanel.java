@@ -9,6 +9,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import tokobuku.SistemTokoBuku;
 import tokobuku.impl.PegawaiImpl;
 import tokobuku.model.Pegawai;
 import tokobuku.util.CustomFont;
@@ -198,7 +199,7 @@ public class UpdateProfilPanel {
                             dialog.dispose();
                         } catch (SQLException ex) {
                             jOpt.displayError(basePanel, "Gagal Menambah Pegawai!", "Error");
-                            System.out.println("Error : " + ex.getMessage());
+                            SistemTokoBuku.logger.warning(ex.getMessage());
                         }
                     }
                 } else {
@@ -213,7 +214,7 @@ public class UpdateProfilPanel {
                     dialog.dispose();
                 } catch (SQLException ex) {
                     jOpt.displayError(basePanel, "Gagal Menambah Pegawai!", "Error");
-                    System.out.println("Error : " + ex.getMessage());
+                    SistemTokoBuku.logger.warning(ex.getMessage());
                 }
             }
         });

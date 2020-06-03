@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import tokobuku.SistemTokoBuku;
 import tokobuku.impl.KategoriImpl;
 import tokobuku.model.Kategori;
 
@@ -51,7 +52,7 @@ public class KategoriPanelView extends javax.swing.JPanel {
             kategoriImpl.listKategoris = new ArrayList<>();
             kategoriImpl.load();
         } catch (SQLException ex) {
-            System.out.println("Error Fetching Data Kategori : " + ex.getMessage());
+            SistemTokoBuku.logger.warning(ex.getMessage());
         }
         listKategoris = kategoriImpl.listKategoris;
         totalKategori = listKategoris.size();
@@ -284,7 +285,7 @@ public class KategoriPanelView extends javax.swing.JPanel {
                 DashboardPegawaiView.getInstance().loadDataKategori();
             } catch (SQLException ex) {
                 jOpt.displayError(this, "Gagal Menambah Kategori!", "Error");
-                System.out.println("Error : " + ex.getMessage());
+                SistemTokoBuku.logger.warning(ex.getMessage());
             }
 
             ktgr = new Kategori();
@@ -449,7 +450,7 @@ public class KategoriPanelView extends javax.swing.JPanel {
                                             total_buku.setVisible(true);
                                             labelJumlahBuku.setVisible(true);
                                         } catch (SQLException ex) {
-                                            System.out.println("Error Fetch Jumlah Buku! " + ex.getMessage());
+                                            SistemTokoBuku.logger.warning(ex.getMessage());
                                         }
                                         click.set(index - 1, !click.get(index - 1));
                                     } else {
@@ -496,7 +497,7 @@ public class KategoriPanelView extends javax.swing.JPanel {
             try {
                 DashboardPegawaiView.getInstance().kategoriImpl.update(kategori, kode);
             } catch (SQLException ex) {
-                System.out.println("Error : " + ex.getMessage());
+                SistemTokoBuku.logger.warning(ex.getMessage());
                 tf_kode.setText(String.valueOf(oldKategori.getKode_kategori()));
                 tf_namakategori.setText(oldKategori.getNama_kategori());
                 tf_rak.setText(oldKategori.getRak());

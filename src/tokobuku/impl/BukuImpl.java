@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import tokobuku.SistemTokoBuku;
 import tokobuku.interf.BukuInterface;
 import tokobuku.model.Buku;
 import tokobuku.util.ConnectionUtil;
@@ -81,8 +82,8 @@ public class BukuImpl implements BukuInterface {
                 addBukuToList(buku, res);
                 listBuku.add(buku);
             }
-        } catch (SQLException e) {
-            System.out.println("Error Search!\n" + e);
+        } catch (SQLException ex) {
+            SistemTokoBuku.logger.warning(ex.getMessage());
         }
         return listBuku;
     }
@@ -99,8 +100,8 @@ public class BukuImpl implements BukuInterface {
                 addBukuToList(buku, res);
                 listBuku.add(buku);
             }
-        } catch (SQLException e) {
-            System.out.println("Error Fetching Data Buku!\n" + e);
+        } catch (SQLException ex) {
+            SistemTokoBuku.logger.warning(ex.getMessage());
         }
         return listBuku;
     }
@@ -121,8 +122,8 @@ public class BukuImpl implements BukuInterface {
                     addBukuToList(buku, res);
                     listBuku.add(buku);
                 }
-            } catch (SQLException e) {
-                System.out.println("Error Fetching Data Buku!\n" + e);
+            } catch (SQLException ex) {
+                SistemTokoBuku.logger.warning(ex.getMessage());
             }
         } else {
 

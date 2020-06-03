@@ -3,6 +3,7 @@ package tokobuku.util;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import tokobuku.SistemTokoBuku;
 
 /**
  *
@@ -22,11 +23,8 @@ public class ConnectionUtil {
             Class.forName(JDBC_DRIVER);
             // mengkoneksikan database
             dbConnection = DriverManager.getConnection(DB_URL, USER, PASS);
-        } catch (ClassNotFoundException e) {
-            System.out.println("JDBC Driver Tidak ditemukan: " + e.getMessage());
-            return null;
-        } catch (SQLException e) {
-            System.out.println("Koneksi Database gagal: " + e.getMessage());
+        } catch (ClassNotFoundException | SQLException ex) {
+            SistemTokoBuku.logger.warning(ex.getMessage());
             return null;
         }
         

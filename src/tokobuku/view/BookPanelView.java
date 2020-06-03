@@ -23,6 +23,7 @@ import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
 import org.netbeans.lib.awtextra.AbsoluteLayout;
+import tokobuku.SistemTokoBuku;
 import tokobuku.impl.BukuImpl;
 import tokobuku.impl.KategoriImpl;
 import tokobuku.model.Buku;
@@ -506,9 +507,9 @@ public class BookPanelView {
                                 buku.setImage(Formatter.extractBytes(img));
                                 coverBuku.setIcon(new ImageIcon(Formatter.buffBytes(buku.getImage())));
                             } catch (FileNotFoundException ex) {
-                                System.out.println("Error (FileNotFound): " + ex.getMessage());
+                                SistemTokoBuku.logger.warning(ex.getMessage());
                             } catch (IOException ex) {
-                                System.out.println("Error (IO): " + ex.getMessage());
+                                SistemTokoBuku.logger.warning(ex.getMessage());
                             }
                         }
                     }
@@ -553,7 +554,7 @@ public class BookPanelView {
                     buku.setTahun(tf_tahunBuku.getText());
                     bukuImpl.update(buku, Formatter.destructIsbn(tf_isbnBuku.getText()));
                 } catch (SQLException ex) {
-                    System.out.println("Error : " + ex.getMessage());
+                    SistemTokoBuku.logger.warning(ex.getMessage());
                 }
 
                 tf_stokBuku.setEnabled(false);

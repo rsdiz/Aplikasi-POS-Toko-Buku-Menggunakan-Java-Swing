@@ -311,7 +311,7 @@ public class KategoriPanelView extends javax.swing.JPanel {
                         btnHapusKategori.setVisible(false);
                         break;
                     } catch (SQLException ex) {
-                        Logger.getLogger(KategoriPanelView.class.getName()).log(Level.SEVERE, null, ex);
+                        SistemTokoBuku.logger.warning(ex.getMessage());
                     }
                 }
                 default:
@@ -327,7 +327,11 @@ public class KategoriPanelView extends javax.swing.JPanel {
                 panelList.get(selected - 1).cancelSave();
             } else {
                 ktgr = new Kategori();
-                panelList.get(listKategoris.size()).setEditable(isEditable);
+                try {
+                    panelList.get(listKategoris.size()).setEditable(isEditable);
+                } catch (IndexOutOfBoundsException ex) {
+                    SistemTokoBuku.logger.warning(ex.getMessage());
+                }
                 panelList.remove(panelList.size() - 1);
                 loadDataKategori();
                 setListKategori();
